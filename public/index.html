@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Group Chat</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+</head>
+
+<body>
+
+<div class="app">
+
+    <div class="header">
+        <h1>Group Chat</h1>
+        <p>Real-time WebSocket Chat Application</p>
+    </div>
+
+
+    <!-- ================================= -->
+    <!-- ROOM SETUP -->
+    <!-- ================================= -->
+
+    <div
+        id="roomSection"
+        class="card"
+    >
+
+        <div class="section">
+
+            <h2>Create Room</h2>
+
+            <input
+                id="createUsername"
+                type="text"
+                placeholder="Enter username"
+                maxlength="30"
+            >
+
+            <label>
+                Maximum users
+            </label>
+
+            <input
+                id="roomCapacity"
+                type="number"
+                min="2"
+                max="100"
+                value="4"
+            >
+
+            <label>
+                Room duration
+            </label>
+
+            <select id="roomDuration">
+
+                <option value="none">
+                    No duration
+                </option>
+
+                <option value="1">
+                    1 minute
+                </option>
+
+                <option value="5">
+                    5 minutes
+                </option>
+
+                <option value="10">
+                    10 minutes
+                </option>
+
+                <option value="30">
+                    30 minutes
+                </option>
+
+                <option value="60">
+                    60 minutes
+                </option>
+
+                <option value="120">
+                    120 minutes
+                </option>
+
+            </select>
+
+            <button id="createRoomButton">
+                Create Room
+            </button>
+
+        </div>
+
+
+        <div class="divider">
+            OR
+        </div>
+
+
+        <div class="section">
+
+            <h2>Join Room</h2>
+
+            <input
+                id="joinUsername"
+                type="text"
+                placeholder="Enter username"
+                maxlength="30"
+            >
+
+            <input
+                id="roomCodeInput"
+                type="text"
+                placeholder="Enter room code"
+                maxlength="6"
+            >
+
+            <button id="joinRoomButton">
+                Join Room
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================= -->
+    <!-- CHAT -->
+    <!-- ================================= -->
+
+    <div
+        id="chat"
+        class="chat-container"
+        style="display: none;"
+    >
+
+        <div class="chat-header">
+
+            <div>
+                <h2>
+                    Room
+                    <span id="roomCodeDisplay"></span>
+                </h2>
+
+                <p id="roomStatus">
+                    Connected
+                </p>
+            </div>
+
+            <div
+                id="roomExpiry"
+                class="expiry"
+            >
+                No expiry
+            </div>
+
+        </div>
+
+
+        <div
+            id="messages"
+            class="messages"
+        ></div>
+
+
+        <div class="message-area">
+
+            <input
+                id="messageInput"
+                type="text"
+                placeholder="Type your message..."
+                maxlength="1000"
+                autocomplete="off"
+            >
+
+            <button id="sendButton">
+                Send
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script src="/socket.io/socket.io.js"></script>
+
+<script src="app.js"></script>
+
+</body>
+</html>
