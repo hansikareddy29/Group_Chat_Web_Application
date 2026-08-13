@@ -2,26 +2,23 @@ const socket = io();
 
 
 // ========================================
-// DOM ELEMENTS
+// HOME ELEMENTS
 // ========================================
 
-const roomSection =
-    document.getElementById("roomSection");
-
-const chat =
-    document.getElementById("chat");
+const homeScreen =
+    document.getElementById("homeScreen");
 
 const createUsername =
     document.getElementById("createUsername");
 
-const roomCapacity =
-    document.getElementById("roomCapacity");
+const capacityInput =
+    document.getElementById("capacity");
 
-const roomDuration =
-    document.getElementById("roomDuration");
+const durationInput =
+    document.getElementById("duration");
 
-const createRoomButton =
-    document.getElementById("createRoomButton");
+const createButton =
+    document.getElementById("createButton");
 
 const joinUsername =
     document.getElementById("joinUsername");
@@ -29,19 +26,36 @@ const joinUsername =
 const roomCodeInput =
     document.getElementById("roomCodeInput");
 
-const joinRoomButton =
-    document.getElementById("joinRoomButton");
+const joinButton =
+    document.getElementById("joinButton");
 
-const roomCodeDisplay =
-    document.getElementById("roomCodeDisplay");
+const errorMessage =
+    document.getElementById("errorMessage");
 
-const roomExpiry =
-    document.getElementById("roomExpiry");
 
-const roomStatus =
-    document.getElementById("roomStatus");
+// ========================================
+// CHAT ELEMENTS
+// ========================================
 
-const messages =
+const chatScreen =
+    document.getElementById("chatScreen");
+
+const roomCodeElement =
+    document.getElementById("roomCode");
+
+const connectionStatus =
+    document.getElementById("connectionStatus");
+
+const timerElement =
+    document.getElementById("timer");
+
+const copyCodeButton =
+    document.getElementById("copyCodeButton");
+
+const leaveButton =
+    document.getElementById("leaveButton");
+
+const messagesElement =
     document.getElementById("messages");
 
 const messageInput =
@@ -50,80 +64,94 @@ const messageInput =
 const sendButton =
     document.getElementById("sendButton");
 
+const typingIndicator =
+    document.getElementById("typingIndicator");
+
 
 // ========================================
-// CLIENT STATE
+// MESSAGE INFO
+// ========================================
+
+const messageInfoModal =
+    document.getElementById(
+        "messageInfoModal"
+    );
+
+const infoMessage =
+    document.getElementById(
+        "infoMessage"
+    );
+
+const infoUsers =
+    document.getElementById(
+        "infoUsers"
+    );
+
+const closeInfoButton =
+    document.getElementById(
+        "closeInfoButton"
+    );
+
+
+// ========================================
+// STATE
 // ========================================
 
 let username = "";
 
-let currentRoom = "";
+let currentRoomCode = "";
 
-let roomExpiresAt = null;
+let expiresAt = null;
 
-let countdownInterval = null;
+let timerInterval = null;
 
-let expiryWarnings = new Set();
+let typingTimeout = null;
 
-let lastMessageSequence = 0;
+let currentlyTypingUsers =
+    new Set();
 
 
-// messageId -> DOM element
+// ========================================
+// MESSAGE STORAGE
+// ========================================
 
-const myMessages = new Map();
+const messageElements =
+    new Map();
 
 
 // ========================================
 // CREATE ROOM
 // ========================================
 
-createRoomButton.addEventListener(
+createButton.addEventListener(
     "click",
     () => {
+
+        errorMessage.textContent = "";
 
         const name =
             createUsername.value.trim();
 
         const capacity =
-            Number(roomCapacity.value);
+            Number(
+                capacityInput.value
+            );
 
         const duration =
-            roomDuration.value;
-
-
-        if (name === "") {
-
-            alert(
-                "Please enter a username."
-            );
-
-            return;
-        }
-
-
-        if (
-            !Number.isInteger(capacity) ||
-            capacity < 2 ||
-            capacity > 100
-        ) {
-
-            alert(
-                "Capacity must be between 2 and 100."
-            );
-
-            return;
-        }
-
-
-        username = name;
+            durationInput.value;
 
 
         socket.emit(
             "create_room",
             {
-                username,
-                capacity,
-                duration
+                username:
+                    name,
+
+                capacity:
+                    capacity,
+
+                duration:
+                    duration
             }
         );
 
@@ -135,54 +163,157 @@ createRoomButton.addEventListener(
 // JOIN ROOM
 // ========================================
 
-joinRoomButton.addEventListener(
+joinButton.addEventListener(
     "click",
     () => {
+
+        errorMessage.textContent = "";
 
         const name =
             joinUsername.value.trim();
 
-        const code =
+        const roomCode =
             roomCodeInput.value
                 .trim()
                 .toUpperCase();
 
 
-        if (name === "") {
-
-            alert(
-                "Please enter a username."
-            );
-
-            return;
-        }
-
-
-        if (code === "") {
-
-            alert(
-                "Please enter a room code."
-            );
-
-            return;
-        }
-
-
-        username = name;
-
-        currentRoom = code;
-
-
         socket.emit(
             "join_room",
             {
-                username,
-                roomCode: code
+                username:
+                    name,
+
+                roomCode:
+                    roomCode
             }
         );
 
     }
 );
+
+
+// ========================================
+// SEND BUTTON
+// ========================================
+
+sendButton.addEventListener(
+    "click",
+    sendMessage
+);
+
+
+// ========================================
+// ENTER KEY
+// ========================================
+
+messageInput.addEventListener(
+    "keydown",
+    (event) => {
+
+        if (
+            event.key === "Enter"
+        ) {
+
+            event.preventDefault();
+
+            stopTyping();
+
+            sendMessage();
+
+        }
+
+    }
+);
+
+
+// ========================================
+// TYPING
+// ========================================
+
+messageInput.addEventListener(
+    "input",
+    () => {
+
+        if (
+            messageInput.value.trim() === ""
+        ) {
+
+            stopTyping();
+
+            return;
+        }
+
+
+        socket.emit(
+            "typing_start"
+        );
+
+
+        clearTimeout(
+            typingTimeout
+        );
+
+
+        typingTimeout =
+            setTimeout(
+                () => {
+
+                    stopTyping();
+
+                },
+                1200
+            );
+
+    }
+);
+
+
+function stopTyping() {
+
+    clearTimeout(
+        typingTimeout
+    );
+
+
+    socket.emit(
+        "typing_stop"
+    );
+
+}
+
+
+// ========================================
+// SEND MESSAGE
+// ========================================
+
+function sendMessage() {
+
+    const message =
+        messageInput.value.trim();
+
+
+    if (!message) {
+        return;
+    }
+
+
+    socket.emit(
+        "chat_message",
+        {
+            message:
+                message
+        }
+    );
+
+
+    messageInput.value = "";
+
+    stopTyping();
+
+    messageInput.focus();
+
+}
 
 
 // ========================================
@@ -193,18 +324,16 @@ socket.on(
     "room_created",
     (data) => {
 
-        currentRoom =
-            data.roomCode;
+        username =
+            createUsername.value.trim();
 
-        roomExpiresAt =
-            data.expiresAt;
-
-
-        enterChat();
+        enterChat(
+            data
+        );
 
 
         addSystemMessage(
-            `Room created. Code: ${currentRoom}`
+            `Room created. Code: ${data.roomCode}`
         );
 
     }
@@ -219,18 +348,16 @@ socket.on(
     "room_joined",
     (data) => {
 
-        currentRoom =
-            data.roomCode;
+        username =
+            joinUsername.value.trim();
 
-        roomExpiresAt =
-            data.expiresAt;
-
-
-        enterChat();
+        enterChat(
+            data
+        );
 
 
         addSystemMessage(
-            `You joined room ${currentRoom}`
+            `You joined room ${data.roomCode}`
         );
 
     }
@@ -241,24 +368,46 @@ socket.on(
 // ENTER CHAT
 // ========================================
 
-function enterChat() {
+function enterChat(data) {
 
-    roomSection.style.display =
-        "none";
+    currentRoomCode =
+        data.roomCode;
 
-    chat.style.display =
-        "block";
-
-
-    roomCodeDisplay.textContent =
-        currentRoom;
+    expiresAt =
+        data.expiresAt;
 
 
-    roomStatus.textContent =
+    roomCodeElement.textContent =
+        currentRoomCode;
+
+
+    homeScreen.classList.add(
+        "hidden"
+    );
+
+    chatScreen.classList.remove(
+        "hidden"
+    );
+
+
+    messageInput.disabled =
+        false;
+
+    sendButton.disabled =
+        false;
+
+    copyCodeButton.disabled =
+        false;
+
+    leaveButton.disabled =
+        false;
+
+
+    connectionStatus.textContent =
         "Connected";
 
 
-    startCountdown();
+    startTimer();
 
 
     messageInput.focus();
@@ -267,455 +416,15 @@ function enterChat() {
 
 
 // ========================================
-// COUNTDOWN
-// ========================================
-
-function startCountdown() {
-
-    if (countdownInterval) {
-
-        clearInterval(
-            countdownInterval
-        );
-
-    }
-
-
-    expiryWarnings.clear();
-
-
-    if (!roomExpiresAt) {
-
-        roomExpiry.textContent =
-            "No expiry";
-
-        return;
-    }
-
-
-    updateCountdown();
-
-
-    countdownInterval =
-        setInterval(
-            updateCountdown,
-            1000
-        );
-
-}
-
-
-function updateCountdown() {
-
-    if (!roomExpiresAt) {
-
-        roomExpiry.textContent =
-            "No expiry";
-
-        return;
-    }
-
-
-    const remaining =
-        roomExpiresAt -
-        Date.now();
-
-
-    if (remaining <= 0) {
-
-        roomExpiry.textContent =
-            "Room expired";
-
-
-        roomStatus.textContent =
-            "Expired";
-
-
-        clearInterval(
-            countdownInterval
-        );
-
-
-        return;
-    }
-
-
-    const totalSeconds =
-        Math.floor(
-            remaining / 1000
-        );
-
-
-    const hours =
-        Math.floor(
-            totalSeconds / 3600
-        );
-
-
-    const minutes =
-        Math.floor(
-            (totalSeconds % 3600) / 60
-        );
-
-
-    const seconds =
-        totalSeconds % 60;
-
-
-    let timeText;
-
-
-    if (hours > 0) {
-
-        timeText =
-            `${hours}h ` +
-            `${minutes}m ` +
-            `${seconds}s`;
-
-    } else {
-
-        timeText =
-            `${minutes}m ` +
-            `${seconds}s`;
-
-    }
-
-
-    roomExpiry.textContent =
-        `Room expires in: ${timeText}`;
-
-
-    checkExpiryWarning(
-        totalSeconds
-    );
-
-}
-
-
-// ========================================
-// EXPIRY WARNINGS
-// ========================================
-
-function checkExpiryWarning(
-    totalSeconds
-) {
-
-    const warningTimes = [
-        600,
-        300,
-        60
-    ];
-
-
-    for (
-        const warningTime
-        of warningTimes
-    ) {
-
-        if (
-            totalSeconds <= warningTime &&
-            totalSeconds > warningTime - 2 &&
-            !expiryWarnings.has(
-                warningTime
-            )
-        ) {
-
-            expiryWarnings.add(
-                warningTime
-            );
-
-
-            let text;
-
-
-            if (
-                warningTime === 600
-            ) {
-
-                text =
-                    "Room expires in 10 minutes.";
-
-            }
-
-            else if (
-                warningTime === 300
-            ) {
-
-                text =
-                    "Room expires in 5 minutes.";
-
-            }
-
-            else {
-
-                text =
-                    "Room expires in 1 minute.";
-
-            }
-
-
-            addSystemMessage(text);
-
-        }
-
-    }
-
-}
-
-
-// ========================================
-// SEND MESSAGE
-// ========================================
-
-sendButton.addEventListener(
-    "click",
-    sendMessage
-);
-
-
-messageInput.addEventListener(
-    "keydown",
-    (event) => {
-
-        if (
-            event.key === "Enter"
-        ) {
-
-            event.preventDefault();
-
-            sendMessage();
-
-        }
-
-    }
-);
-
-
-function sendMessage() {
-
-    const text =
-        messageInput.value.trim();
-
-
-    if (text === "") {
-
-        return;
-    }
-
-
-    socket.emit(
-        "chat_message",
-        {
-            roomCode:
-                currentRoom,
-
-            message:
-                text
-        }
-    );
-
-
-    messageInput.value = "";
-
-}
-
-
-// ========================================
-// RECEIVE MESSAGE
+// ROOM ERROR
 // ========================================
 
 socket.on(
-    "chat_message",
-    (data) => {
-
-        // Ignore old/out-of-order messages
-
-        if (
-            data.sequence <=
-            lastMessageSequence
-        ) {
-
-            return;
-        }
-
-
-        lastMessageSequence =
-            data.sequence;
-
-
-        const element =
-            document.createElement("div");
-
-
-        element.className =
-            "message";
-
-
-        const userElement =
-            document.createElement("span");
-
-
-        userElement.className =
-            "message-user";
-
-
-        const textElement =
-            document.createElement("span");
-
-
-        if (
-            data.username ===
-            username
-        ) {
-
-            element.classList.add(
-                "mine"
-            );
-
-
-            userElement.textContent =
-                "You:";
-
-        } else {
-
-            userElement.textContent =
-                `${data.username}:`;
-
-        }
-
-
-        textElement.textContent =
-            ` ${data.message}`;
-
-
-        element.appendChild(
-            userElement
-        );
-
-
-        element.appendChild(
-            textElement
-        );
-
-
-        // --------------------------------
-        // Own message status
-        // --------------------------------
-
-        if (
-            data.username ===
-            username
-        ) {
-
-            const status =
-                document.createElement(
-                    "span"
-                );
-
-
-            status.className =
-                "message-status";
-
-
-            status.textContent =
-                "Sent";
-
-
-            element.appendChild(
-                status
-            );
-
-
-            myMessages.set(
-                data.messageId,
-                {
-                    statusElement:
-                        status
-                }
-            );
-
-        }
-
-
-        messages.appendChild(
-            element
-        );
-
-
-        messages.scrollTop =
-            messages.scrollHeight;
-
-
-        // Tell server message is visible
-
-        socket.emit(
-            "message_seen",
-            {
-                messageId:
-                    data.messageId
-            }
-        );
-
-    }
-);
-
-
-// ========================================
-// MESSAGE SENT
-// ========================================
-
-socket.on(
-    "message_sent",
-    (messageId) => {
-
-        const message =
-            myMessages.get(
-                messageId
-            );
-
-
-        if (!message) {
-
-            return;
-        }
-
-
-        message.statusElement.textContent =
-            "Sent";
-
-    }
-);
-
-
-// ========================================
-// MESSAGE SEEN
-// ========================================
-
-socket.on(
-    "message_seen_update",
-    (data) => {
-
-        const message =
-            myMessages.get(
-                data.messageId
-            );
-
-
-        if (!message) {
-
-            return;
-        }
-
-
-        if (
-            data.seenCount >=
-            data.totalUsers
-        ) {
-
-            message.statusElement.textContent =
-                "Seen";
-
-        }
+    "room_error",
+    (message) => {
+
+        errorMessage.textContent =
+            message;
 
     }
 );
@@ -745,6 +454,13 @@ socket.on(
     "user_left",
     (name) => {
 
+        currentlyTypingUsers.delete(
+            name
+        );
+
+        updateTypingIndicator();
+
+
         addSystemMessage(
             `${name} left the room`
         );
@@ -760,7 +476,9 @@ socket.on(
 function addSystemMessage(text) {
 
     const element =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
 
     element.className =
@@ -771,26 +489,828 @@ function addSystemMessage(text) {
         text;
 
 
-    messages.appendChild(
+    messagesElement.appendChild(
         element
     );
 
 
-    messages.scrollTop =
-        messages.scrollHeight;
+    scrollToBottom();
 
 }
 
 
 // ========================================
-// ROOM ERROR
+// CHAT MESSAGE
 // ========================================
 
 socket.on(
-    "room_error",
-    (message) => {
+    "chat_message",
+    (data) => {
 
-        alert(message);
+        renderMessage(
+            data
+        );
+
+    }
+);
+
+
+// ========================================
+// RENDER MESSAGE
+// ========================================
+
+function renderMessage(data) {
+
+    const isMine =
+        data.senderId === socket.id;
+
+
+    const messageElement =
+        document.createElement(
+            "div"
+        );
+
+
+    messageElement.classList.add(
+        "message"
+    );
+
+
+    messageElement.classList.add(
+        isMine
+            ? "mine"
+            : "other"
+    );
+
+
+    // Header
+
+    const header =
+        document.createElement(
+            "div"
+        );
+
+
+    header.className =
+        "message-header";
+
+
+    header.textContent =
+        isMine
+            ? "You:"
+            : `${data.username}:`;
+
+
+    // Message text
+
+    const text =
+        document.createElement(
+            "div"
+        );
+
+
+    text.className =
+        "message-text";
+
+
+    text.textContent =
+        data.message;
+
+
+    // Footer
+
+    const footer =
+        document.createElement(
+            "div"
+        );
+
+
+    footer.className =
+        "message-footer";
+
+
+    const time =
+        document.createElement(
+            "span"
+        );
+
+
+    time.textContent =
+        formatTime(
+            data.timestamp
+        );
+
+
+    footer.appendChild(
+        time
+    );
+
+
+    // Status
+
+    let status = null;
+
+
+    if (isMine) {
+
+        status =
+            document.createElement(
+                "span"
+            );
+
+
+        status.className =
+            "message-status";
+
+
+        status.textContent =
+            getMessageStatus(
+                data
+            );
+
+
+        footer.appendChild(
+            status
+        );
+
+    }
+
+
+    messageElement.appendChild(
+        header
+    );
+
+
+    messageElement.appendChild(
+        text
+    );
+
+
+    messageElement.appendChild(
+        footer
+    );
+
+
+    messagesElement.appendChild(
+        messageElement
+    );
+
+
+    // Store message
+
+    messageElements.set(
+        data.id,
+        {
+            element:
+                messageElement,
+
+            status:
+                status,
+
+            data:
+                data
+        }
+    );
+
+
+    // Click own message
+
+    if (isMine) {
+
+        messageElement.addEventListener(
+            "click",
+            () => {
+
+                showMessageInfo(
+                    data
+                );
+
+            }
+        );
+
+    }
+
+
+    // Mark other user's message as seen
+
+    if (!isMine) {
+
+        socket.emit(
+            "message_seen",
+            {
+                messageId:
+                    data.id
+            }
+        );
+
+    }
+
+
+    scrollToBottom();
+
+}
+
+
+// ========================================
+// MESSAGE STATUS
+// ========================================
+
+function getMessageStatus(data) {
+
+    const delivered =
+        data.deliveredTo || [];
+
+    const seen =
+        data.seenBy || [];
+
+
+    if (
+        delivered.length === 0
+    ) {
+
+        return "Sent";
+
+    }
+
+
+    if (
+        seen.length ===
+        delivered.length
+    ) {
+
+        return "Seen";
+
+    }
+
+
+    return "Delivered";
+
+}
+
+
+// ========================================
+// STATUS UPDATE
+// ========================================
+
+socket.on(
+    "message_status_update",
+    (data) => {
+
+        const message =
+            messageElements.get(
+                data.messageId
+            );
+
+
+        if (!message) {
+            return;
+        }
+
+
+        message.data.deliveredTo =
+            data.deliveredTo || [];
+
+
+        message.data.seenBy =
+            data.seenBy || [];
+
+
+        if (message.status) {
+
+            message.status.textContent =
+                getMessageStatus(
+                    message.data
+                );
+
+        }
+
+    }
+);
+
+
+// ========================================
+// MESSAGE INFO
+// ========================================
+
+function showMessageInfo(data) {
+
+    infoMessage.textContent =
+        data.message;
+
+
+    infoUsers.innerHTML =
+        "";
+
+
+    const delivered =
+        data.deliveredTo || [];
+
+    const seen =
+        data.seenBy || [];
+
+
+    if (
+        delivered.length === 0
+    ) {
+
+        const row =
+            document.createElement(
+                "div"
+            );
+
+
+        row.className =
+            "status-row";
+
+
+        row.textContent =
+            "No other users received this message.";
+
+
+        infoUsers.appendChild(
+            row
+        );
+
+    }
+
+
+    delivered.forEach(
+        (name) => {
+
+            const row =
+                document.createElement(
+                    "div"
+                );
+
+
+            row.className =
+                "status-row";
+
+
+            const nameElement =
+                document.createElement(
+                    "span"
+                );
+
+
+            nameElement.className =
+                "status-name";
+
+
+            nameElement.textContent =
+                name;
+
+
+            const statusElement =
+                document.createElement(
+                    "span"
+                );
+
+
+            statusElement.className =
+                "status-value";
+
+
+            statusElement.textContent =
+                seen.includes(name)
+                    ? "Seen"
+                    : "Delivered";
+
+
+            row.appendChild(
+                nameElement
+            );
+
+
+            row.appendChild(
+                statusElement
+            );
+
+
+            infoUsers.appendChild(
+                row
+            );
+
+        }
+    );
+
+
+    messageInfoModal.classList.remove(
+        "hidden"
+    );
+
+}
+
+
+// ========================================
+// CLOSE INFO
+// ========================================
+
+closeInfoButton.addEventListener(
+    "click",
+    () => {
+
+        messageInfoModal.classList.add(
+            "hidden"
+        );
+
+    }
+);
+
+
+messageInfoModal.addEventListener(
+    "click",
+    (event) => {
+
+        if (
+            event.target ===
+            messageInfoModal
+        ) {
+
+            messageInfoModal.classList.add(
+                "hidden"
+            );
+
+        }
+
+    }
+);
+
+
+// ========================================
+// COPY ROOM CODE
+// ========================================
+
+copyCodeButton.addEventListener(
+    "click",
+    async () => {
+
+        try {
+
+            await navigator.clipboard.writeText(
+                currentRoomCode
+            );
+
+
+            const oldText =
+                copyCodeButton.textContent;
+
+
+            copyCodeButton.textContent =
+                "Copied";
+
+
+            setTimeout(
+                () => {
+
+                    copyCodeButton.textContent =
+                        oldText;
+
+                },
+                1500
+            );
+
+        } catch (error) {
+
+            alert(
+                `Room Code: ${currentRoomCode}`
+            );
+
+        }
+
+    }
+);
+
+
+// ========================================
+// LEAVE ROOM
+// ========================================
+
+leaveButton.addEventListener(
+    "click",
+    () => {
+
+        const confirmed =
+            confirm(
+                "Are you sure you want to leave this room?"
+            );
+
+
+        if (!confirmed) {
+            return;
+        }
+
+
+        stopTyping();
+
+
+        socket.emit(
+            "leave_room"
+        );
+
+    }
+);
+
+
+// ========================================
+// ROOM LEFT
+// ========================================
+
+socket.on(
+    "room_left",
+    () => {
+
+        resetChat();
+
+    }
+);
+
+
+// ========================================
+// RESET CHAT
+// ========================================
+
+function resetChat() {
+
+    if (timerInterval) {
+
+        clearInterval(
+            timerInterval
+        );
+
+        timerInterval =
+            null;
+
+    }
+
+
+    clearTimeout(
+        typingTimeout
+    );
+
+
+    currentRoomCode =
+        "";
+
+    expiresAt =
+        null;
+
+    currentlyTypingUsers.clear();
+
+    messageElements.clear();
+
+
+    messagesElement.innerHTML =
+        "";
+
+
+    typingIndicator.textContent =
+        "";
+
+
+    messageInput.value =
+        "";
+
+
+    messageInput.disabled =
+        false;
+
+    sendButton.disabled =
+        false;
+
+    copyCodeButton.disabled =
+        false;
+
+    leaveButton.disabled =
+        false;
+
+
+    timerElement.textContent =
+        "No duration";
+
+
+    connectionStatus.textContent =
+        "Connected";
+
+
+    errorMessage.textContent =
+        "";
+
+
+    chatScreen.classList.add(
+        "hidden"
+    );
+
+    homeScreen.classList.remove(
+        "hidden"
+    );
+
+}
+
+
+// ========================================
+// TYPING RECEIVED
+// ========================================
+
+socket.on(
+    "user_typing",
+    (name) => {
+
+        if (
+            name === username
+        ) {
+
+            return;
+
+        }
+
+
+        currentlyTypingUsers.add(
+            name
+        );
+
+
+        updateTypingIndicator();
+
+    }
+);
+
+
+// ========================================
+// TYPING STOPPED
+// ========================================
+
+socket.on(
+    "user_stopped_typing",
+    (name) => {
+
+        currentlyTypingUsers.delete(
+            name
+        );
+
+
+        updateTypingIndicator();
+
+    }
+);
+
+
+// ========================================
+// TYPING UI
+// ========================================
+
+function updateTypingIndicator() {
+
+    const users =
+        [...currentlyTypingUsers];
+
+
+    if (
+        users.length === 0
+    ) {
+
+        typingIndicator.textContent =
+            "";
+
+        return;
+
+    }
+
+
+    if (
+        users.length === 1
+    ) {
+
+        typingIndicator.textContent =
+            `${users[0]} is typing...`;
+
+        return;
+
+    }
+
+
+    if (
+        users.length === 2
+    ) {
+
+        typingIndicator.textContent =
+            `${users[0]} and ${users[1]} are typing...`;
+
+        return;
+
+    }
+
+
+    typingIndicator.textContent =
+        `${users.length} people are typing...`;
+
+}
+
+
+// ========================================
+// TIMER
+// ========================================
+
+function startTimer() {
+
+    if (timerInterval) {
+
+        clearInterval(
+            timerInterval
+        );
+
+    }
+
+
+    if (
+        expiresAt === null
+    ) {
+
+        timerElement.textContent =
+            "No duration";
+
+        return;
+
+    }
+
+
+    updateTimer();
+
+
+    timerInterval =
+        setInterval(
+            updateTimer,
+            1000
+        );
+
+}
+
+
+function updateTimer() {
+
+    if (
+        expiresAt === null
+    ) {
+
+        timerElement.textContent =
+            "No duration";
+
+        return;
+
+    }
+
+
+    const remaining =
+        Math.max(
+            0,
+            expiresAt - Date.now()
+        );
+
+
+    const totalSeconds =
+        Math.floor(
+            remaining / 1000
+        );
+
+
+    const minutes =
+        Math.floor(
+            totalSeconds / 60
+        );
+
+
+    const seconds =
+        totalSeconds % 60;
+
+
+    timerElement.textContent =
+        `Room expires in: ${minutes}m ${String(seconds).padStart(2, "0")}s`;
+
+
+    if (
+        remaining <= 0
+    ) {
+
+        clearInterval(
+            timerInterval
+        );
+
+    }
+
+}
+
+
+// ========================================
+// ROOM WARNING
+// ========================================
+
+socket.on(
+    "room_warning",
+    (data) => {
+
+        addSystemMessage(
+            data.message
+        );
 
     }
 );
@@ -804,12 +1324,16 @@ socket.on(
     "room_expired",
     () => {
 
-        roomExpiry.textContent =
-            "Room expired";
+        if (timerInterval) {
+
+            clearInterval(
+                timerInterval
+            );
+
+        }
 
 
-        roomStatus.textContent =
-            "Expired";
+        stopTyping();
 
 
         addSystemMessage(
@@ -820,32 +1344,50 @@ socket.on(
         messageInput.disabled =
             true;
 
-
         sendButton.disabled =
             true;
 
+        copyCodeButton.disabled =
+            true;
 
-        if (countdownInterval) {
+        leaveButton.disabled =
+            true;
 
-            clearInterval(
-                countdownInterval
-            );
 
-        }
+        connectionStatus.textContent =
+            "Room expired";
+
+        timerElement.textContent =
+            "Expired";
 
     }
 );
 
 
 // ========================================
-// SOCKET DISCONNECTED
+// CONNECTION
+// ========================================
+
+socket.on(
+    "connect",
+    () => {
+
+        connectionStatus.textContent =
+            "Connected";
+
+    }
+);
+
+
+// ========================================
+// DISCONNECT
 // ========================================
 
 socket.on(
     "disconnect",
     () => {
 
-        roomStatus.textContent =
+        connectionStatus.textContent =
             "Disconnected";
 
     }
@@ -853,21 +1395,36 @@ socket.on(
 
 
 // ========================================
-// SOCKET RECONNECTED
+// FORMAT TIME
 // ========================================
 
-socket.on(
-    "connect",
-    () => {
+function formatTime(timestamp) {
 
-        if (
-            currentRoom !== ""
-        ) {
+    const date =
+        new Date(timestamp);
 
-            roomStatus.textContent =
-                "Connected";
 
+    return date.toLocaleTimeString(
+        [],
+        {
+            hour:
+                "2-digit",
+
+            minute:
+                "2-digit"
         }
+    );
 
-    }
-);
+}
+
+
+// ========================================
+// SCROLL
+// ========================================
+
+function scrollToBottom() {
+
+    messagesElement.scrollTop =
+        messagesElement.scrollHeight;
+
+}

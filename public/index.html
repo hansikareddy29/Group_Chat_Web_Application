@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -15,55 +16,47 @@
         rel="stylesheet"
         href="style.css"
     >
+
 </head>
 
 <body>
 
-<div class="app">
+    <div class="container">
 
-    <div class="header">
         <h1>Group Chat</h1>
-        <p>Real-time WebSocket Chat Application</p>
-    </div>
+
+        <p class="subtitle">
+            Real-time WebSocket Chat Application
+        </p>
 
 
-    <!-- ================================= -->
-    <!-- ROOM SETUP -->
-    <!-- ================================= -->
+        <!-- ============================= -->
+        <!-- HOME -->
+        <!-- ============================= -->
 
-    <div
-        id="roomSection"
-        class="card"
-    >
-
-        <div class="section">
+        <div
+            id="homeScreen"
+            class="card"
+        >
 
             <h2>Create Room</h2>
 
             <input
-                id="createUsername"
                 type="text"
+                id="createUsername"
                 placeholder="Enter username"
-                maxlength="30"
+                maxlength="20"
             >
-
-            <label>
-                Maximum users
-            </label>
 
             <input
-                id="roomCapacity"
                 type="number"
+                id="capacity"
+                placeholder="Room capacity"
                 min="2"
                 max="100"
-                value="4"
             >
 
-            <label>
-                Room duration
-            </label>
-
-            <select id="roomDuration">
+            <select id="duration">
 
                 <option value="none">
                     No duration
@@ -95,108 +88,163 @@
 
             </select>
 
-            <button id="createRoomButton">
+            <button id="createButton">
                 Create Room
             </button>
 
-        </div>
 
+            <hr>
 
-        <div class="divider">
-            OR
-        </div>
-
-
-        <div class="section">
 
             <h2>Join Room</h2>
 
             <input
-                id="joinUsername"
                 type="text"
+                id="joinUsername"
                 placeholder="Enter username"
-                maxlength="30"
+                maxlength="20"
             >
 
             <input
-                id="roomCodeInput"
                 type="text"
-                placeholder="Enter room code"
+                id="roomCodeInput"
+                placeholder="Room code"
                 maxlength="6"
             >
 
-            <button id="joinRoomButton">
+            <button id="joinButton">
                 Join Room
             </button>
 
+
+            <p
+                id="errorMessage"
+                class="error"
+            ></p>
+
+        </div>
+
+
+        <!-- ============================= -->
+        <!-- CHAT -->
+        <!-- ============================= -->
+
+        <div
+            id="chatScreen"
+            class="chat-card hidden"
+        >
+
+            <div class="chat-header">
+
+                <div>
+
+                    <h2>
+                        Room
+                        <span id="roomCode"></span>
+                    </h2>
+
+                    <p id="connectionStatus">
+                        Connected
+                    </p>
+
+                </div>
+
+
+                <div class="room-info">
+
+                    <button
+                        id="copyCodeButton"
+                        class="copy-button"
+                    >
+                        Copy Code
+                    </button>
+
+                    <button
+                        id="leaveButton"
+                        class="leave-button"
+                    >
+                        Leave
+                    </button>
+
+                    <div
+                        id="timer"
+                        class="timer"
+                    >
+                        No duration
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="messages"
+                class="messages"
+            ></div>
+
+
+            <!-- TYPING INDICATOR -->
+
+            <div
+                id="typingIndicator"
+                class="typing-indicator"
+            ></div>
+
+
+            <!-- MESSAGE INPUT -->
+
+            <div class="message-input-area">
+
+                <input
+                    type="text"
+                    id="messageInput"
+                    placeholder="Type your message..."
+                    maxlength="1000"
+                    autocomplete="off"
+                >
+
+                <button id="sendButton">
+                    Send
+                </button>
+
+            </div>
+
         </div>
 
     </div>
 
 
-    <!-- ================================= -->
-    <!-- CHAT -->
-    <!-- ================================= -->
+    <!-- ============================= -->
+    <!-- MESSAGE INFO MODAL -->
+    <!-- ============================= -->
 
     <div
-        id="chat"
-        class="chat-container"
-        style="display: none;"
+        id="messageInfoModal"
+        class="modal hidden"
     >
 
-        <div class="chat-header">
+        <div class="modal-content">
 
-            <div>
-                <h2>
-                    Room
-                    <span id="roomCodeDisplay"></span>
-                </h2>
+            <h2>Message Info</h2>
 
-                <p id="roomStatus">
-                    Connected
-                </p>
-            </div>
+            <p id="infoMessage"></p>
 
-            <div
-                id="roomExpiry"
-                class="expiry"
-            >
-                No expiry
-            </div>
+            <div id="infoUsers"></div>
 
-        </div>
-
-
-        <div
-            id="messages"
-            class="messages"
-        ></div>
-
-
-        <div class="message-area">
-
-            <input
-                id="messageInput"
-                type="text"
-                placeholder="Type your message..."
-                maxlength="1000"
-                autocomplete="off"
-            >
-
-            <button id="sendButton">
-                Send
+            <button id="closeInfoButton">
+                Close
             </button>
 
         </div>
 
     </div>
 
-</div>
 
+    <script src="/socket.io/socket.io.js"></script>
 
-<script src="/socket.io/socket.io.js"></script>
-
-<script src="app.js"></script>
+    <script src="app.js"></script>
 
 </body>
+
 </html>
