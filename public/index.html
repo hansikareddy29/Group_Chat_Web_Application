@@ -1,339 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Group Chat</title>
-
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
-
+    <link rel="stylesheet" href="style.css">
 </head>
-
-
 <body>
-
     <div class="container">
+        <h1>Group Chat</h1>
 
-        <h1>
-            Group Chat
-        </h1>
-
-        <p class="subtitle">
-            Real-time WebSocket Chat Application
-        </p>
-
-
-        <!-- ============================= -->
-        <!-- HOME -->
-        <!-- ============================= -->
-
-        <div
-            id="homeScreen"
-            class="card"
-        >
-
-            <h2>
-                Create Room
-            </h2>
-
-
-            <input
-                type="text"
-                id="createUsername"
-                placeholder="Enter username"
-                maxlength="20"
-            >
-
-
-            <input
-                type="number"
-                id="capacity"
-                placeholder="Room capacity"
-                min="2"
-                max="100"
-            >
-
-
-            <select id="duration">
-
-                <option value="none">
-                    No duration
-                </option>
-
-                <option value="1">
-                    1 minute
-                </option>
-
-                <option value="5">
-                    5 minutes
-                </option>
-
-                <option value="10">
-                    10 minutes
-                </option>
-
-                <option value="30">
-                    30 minutes
-                </option>
-
-                <option value="60">
-                    60 minutes
-                </option>
-
-                <option value="120">
-                    120 minutes
-                </option>
-
-            </select>
-
-
-            <button id="createButton">
-                Create Room
-            </button>
-
-
-            <hr>
-
-
-            <h2>
-                Join Room
-            </h2>
-
-
-            <input
-                type="text"
-                id="joinUsername"
-                placeholder="Enter username"
-                maxlength="20"
-            >
-
-
-            <input
-                type="text"
-                id="roomCodeInput"
-                placeholder="Room code"
-                maxlength="6"
-            >
-
-
-            <button id="joinButton">
-                Join Room
-            </button>
-
-
-            <p
-                id="errorMessage"
-                class="error"
-            ></p>
-
+        <!-- LOGIN SCREEN -->
+        <div id="homeScreen" class="card">
+            <h2>Join Room</h2>
+            <input type="text" id="usernameInput" placeholder="Enter username" maxlength="20">
+            <button id="joinButton">Join Room</button>
+            <p id="errorMessage" class="error"></p>
         </div>
 
-
-        <!-- ============================= -->
-        <!-- CHAT -->
-        <!-- ============================= -->
-
-        <div
-            id="chatScreen"
-            class="chat-card hidden"
-        >
-
+        <!-- CHAT SCREEN -->
+        <div id="chatScreen" class="chat-card hidden">
             <div class="chat-header">
-
-
-                <!-- LEFT SIDE -->
-
                 <div>
-
-                    <h2>
-
-                        Room
-                        <span id="roomCode"></span>
-
-                    </h2>
-
-
-                    <!-- CURRENT USER -->
-
-                    <p id="currentUsername">
-                        You: -
-                    </p>
-
-
-                    <!-- PARTICIPANTS -->
-
-                    <div
-                        id="participantsSection"
-                        class="participants-section"
-                    >
-
-                        <!--
-                            This itself is clickable.
-                            There is NO separate button.
-                        -->
-
-                        <div
-                            id="participantsToggle"
-                            class="participants-toggle"
-                        >
-
-                            <span>
-                                👥 Participants
-                            </span>
-
-                            <span id="participantCount">
-                                0/0
-                            </span>
-
+                    <h2>Chat Room</h2>
+                    <p id="displayMyName">You: -</p>
+                    <div class="participants-section">
+                        <div id="participantsToggle" class="participants-toggle">
+                            <span>Participants</span>
+                            <span id="participantCount">0/4</span>
                         </div>
-
-
-                        <!--
-                            Hidden initially.
-                            Clicking Participants
-                            shows this list.
-                        -->
-
-                        <div
-                            id="participantsList"
-                            class="participants-list hidden"
-                        ></div>
-
+                        <div id="participantsList" class="participants-list hidden"></div>
                     </div>
-
-
-                    <!-- CONNECTION -->
-
-                    <p id="connectionStatus">
-                        Connected
-                    </p>
-
                 </div>
-
-
-                <!-- RIGHT SIDE -->
-
                 <div class="room-info">
-
-                    <button
-                        id="copyCodeButton"
-                        class="copy-button"
-                    >
-                        Copy Code
-                    </button>
-
-
-                    <button
-                        id="leaveButton"
-                        class="leave-button"
-                    >
-                        Leave
-                    </button>
-
-
-                    <div
-                        id="timer"
-                        class="timer"
-                    >
-                        No duration
-                    </div>
-
+                    <button id="leaveButton" class="leave-button">Leave</button>
                 </div>
-
             </div>
 
+            <!-- MESSAGE AREA -->
+            <div id="messages" class="messages"></div>
 
-            <!-- ============================= -->
-            <!-- MESSAGES -->
-            <!-- ============================= -->
-
-            <div
-                id="messages"
-                class="messages"
-            ></div>
-
-
-            <!-- ============================= -->
             <!-- TYPING INDICATOR -->
-            <!-- ============================= -->
+            <div id="typingIndicator" class="typing-indicator"></div>
 
-            <div
-                id="typingIndicator"
-                class="typing-indicator"
-            ></div>
-
-
-            <!-- ============================= -->
-            <!-- MESSAGE INPUT -->
-            <!-- ============================= -->
-
+            <!-- INPUT AREA -->
             <div class="message-input-area">
-
-                <input
-                    type="text"
-                    id="messageInput"
-                    placeholder="Type your message..."
-                    maxlength="1000"
-                    autocomplete="off"
-                >
-
-
-                <button id="sendButton">
-                    Send
-                </button>
-
+                <input type="text" id="messageInput" placeholder="Type your message..." autocomplete="off">
+                <button id="sendButton">Send</button>
             </div>
-
         </div>
-
     </div>
-
-
-    <!-- ============================= -->
-    <!-- MESSAGE INFO MODAL -->
-    <!-- ============================= -->
-
-    <div
-        id="messageInfoModal"
-        class="modal hidden"
-    >
-
-        <div class="modal-content">
-
-            <h2>
-                Message Info
-            </h2>
-
-
-            <p id="infoMessage"></p>
-
-
-            <div id="infoUsers"></div>
-
-
-            <button id="closeInfoButton">
-                Close
-            </button>
-
-        </div>
-
-    </div>
-
 
     <script src="/socket.io/socket.io.js"></script>
-
     <script src="app.js"></script>
-
 </body>
-
 </html>
