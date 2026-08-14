@@ -19,6 +19,7 @@ body {
 
 .container {
     width: 100%;
+
     max-width: 760px;
 
     margin: 40px auto;
@@ -42,6 +43,10 @@ h1 {
     margin-bottom: 30px;
 }
 
+
+/* ================================= */
+/* HOME CARD */
+/* ================================= */
 
 .card {
     background: white;
@@ -291,6 +296,8 @@ hr {
 
 .message-status {
     font-size: 11px;
+
+    font-weight: bold;
 }
 
 
@@ -408,6 +415,13 @@ hr {
 }
 
 
+.message-overall-status {
+    border-bottom: 2px solid #ddd;
+
+    margin-bottom: 5px;
+}
+
+
 .status-name {
     font-weight: 500;
 }
@@ -417,6 +431,8 @@ hr {
     color: #666;
 
     font-size: 13px;
+
+    font-weight: bold;
 }
 
 
@@ -425,7 +441,182 @@ hr {
 
     margin-top: 15px;
 }
+#currentUsername {
+    margin: 4px 0;
 
+    font-size: 14px;
+
+    font-weight: bold;
+
+    color: #333;
+}
+#currentUsername {
+    margin: 4px 0;
+
+    font-size: 14px;
+
+    font-weight: bold;
+
+    color: #333;
+}
+
+
+#participantCount {
+    margin: 4px 0;
+
+    font-size: 13px;
+
+    color: #666;
+}
+
+
+#connectionStatus {
+    margin: 4px 0;
+
+    font-size: 13px;
+
+    color: #777;
+}
+.participants-section {
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+
+.participants-header {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    font-size: 14px;
+}
+
+
+#participantCount {
+    color: #666;
+
+    font-size: 13px;
+}
+
+
+.participants-list {
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 6px;
+
+    margin-top: 6px;
+}
+
+
+.participant {
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 5px;
+
+    padding: 4px 9px;
+
+    border-radius: 12px;
+
+    background: #f1f1f1;
+
+    font-size: 12px;
+}
+
+
+.participant.you {
+    font-weight: bold;
+}
+.participants-section {
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+
+.participants-toggle {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    border: none;
+
+    background: transparent;
+
+    padding: 4px 0;
+
+    cursor: pointer;
+
+    font-size: 14px;
+}
+
+
+.participants-toggle:hover {
+    opacity: 0.75;
+}
+
+
+#participantCount {
+    color: #666;
+
+    font-size: 13px;
+}
+
+
+#participantsArrow {
+    font-size: 10px;
+
+    margin-left: 2px;
+}
+
+
+.participants-list {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 5px;
+
+    margin-top: 6px;
+
+    padding: 6px 0;
+}
+
+
+.participant {
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    font-size: 13px;
+
+    padding: 4px 8px;
+
+    border-radius: 6px;
+
+    background: #f5f5f5;
+}
+
+
+.participant.you {
+    font-weight: bold;
+}
+
+
+.hidden {
+    display: none !important;
+}
+/* ================================= */
+/* MOBILE */
+/* ================================= */
 
 @media (max-width: 600px) {
 

@@ -19,6 +19,7 @@
 
 </head>
 
+
 <body>
 
     <div class="container">
@@ -134,48 +135,103 @@
             class="chat-card hidden"
         >
 
-            <div class="chat-header">
+           <div class="chat-header">
 
-                <div>
+    <div>
 
-                    <h2>
-                        Room
-                        <span id="roomCode"></span>
-                    </h2>
+        <h2>
+            Room
+            <span id="roomCode"></span>
+        </h2>
 
-                    <p id="connectionStatus">
-                        Connected
-                    </p>
+        <p id="currentUsername">
+            You: -
+        </p>
 
-                </div>
+        <div
+            id="participantsSection"
+            class="participants-section"
+        >
 
+            <div class="participants-header">
 
-                <div class="room-info">
+                <strong>
+                    👥 Participants
+                </strong>
 
-                    <button
-                        id="copyCodeButton"
-                        class="copy-button"
-                    >
-                        Copy Code
-                    </button>
-
-                    <button
-                        id="leaveButton"
-                        class="leave-button"
-                    >
-                        Leave
-                    </button>
-
-                    <div
-                        id="timer"
-                        class="timer"
-                    >
-                        No duration
-                    </div>
-
-                </div>
+                <span id="participantCount">
+                    0 / 0
+                </span>
 
             </div>
+
+<div
+    id="participantsSection"
+    class="participants-section"
+>
+
+    <button
+        id="participantsToggle"
+        class="participants-toggle"
+        type="button"
+    >
+        <span>
+            👥 Participants
+        </span>
+
+        <span id="participantCount">
+            0 / 0
+        </span>
+
+        <span id="participantsArrow">
+            ▼
+        </span>
+    </button>
+
+
+    <div
+        id="participantsList"
+        class="participants-list hidden"
+    ></div>
+
+</div>
+
+        </div>
+
+
+        <p id="connectionStatus">
+            Connected
+        </p>
+
+    </div>
+
+
+    <div class="room-info">
+
+        <button
+            id="copyCodeButton"
+            class="copy-button"
+        >
+            Copy Code
+        </button>
+
+        <button
+            id="leaveButton"
+            class="leave-button"
+        >
+            Leave
+        </button>
+
+        <div
+            id="timer"
+            class="timer"
+        >
+            No duration
+        </div>
+
+    </div>
+
+</div>
 
 
             <div

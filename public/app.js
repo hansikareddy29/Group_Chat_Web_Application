@@ -43,8 +43,34 @@ const chatScreen =
 const roomCodeElement =
     document.getElementById("roomCode");
 
-const connectionStatus =
-    document.getElementById("connectionStatus");
+
+const currentUsernameElement =
+    document.getElementById(
+        "currentUsername"
+    );
+
+
+const participantCount =
+    document.getElementById(
+        "participantCount"
+    );
+
+const participantsToggle =
+    document.getElementById(
+        "participantsToggle"
+    );
+
+
+const participantsArrow =
+    document.getElementById(
+        "participantsArrow"
+    );
+
+
+const participantsList =
+    document.getElementById(
+        "participantsList"
+    );
 
 const timerElement =
     document.getElementById("timer");
@@ -144,14 +170,11 @@ createButton.addEventListener(
         socket.emit(
             "create_room",
             {
-                username:
-                    name,
+                username: name,
 
-                capacity:
-                    capacity,
+                capacity: capacity,
 
-                duration:
-                    duration
+                duration: duration
             }
         );
 
@@ -181,18 +204,47 @@ joinButton.addEventListener(
         socket.emit(
             "join_room",
             {
-                username:
-                    name,
+                username: name,
 
-                roomCode:
-                    roomCode
+                roomCode: roomCode
             }
         );
 
     }
 );
 
+participantsToggle.addEventListener(
+    "click",
+    () => {
 
+        const isHidden =
+            participantsList.classList.contains(
+                "hidden"
+            );
+
+
+        if (isHidden) {
+
+            participantsList.classList.remove(
+                "hidden"
+            );
+
+            participantsArrow.textContent =
+                "▲";
+
+        } else {
+
+            participantsList.classList.add(
+                "hidden"
+            );
+
+            participantsArrow.textContent =
+                "▼";
+
+        }
+
+    }
+);
 // ========================================
 // SEND BUTTON
 // ========================================
@@ -245,15 +297,35 @@ messageInput.addEventListener(
         }
 
 
-        socket.emit(
-            "typing_start"
-        );
+        /*
+         * Only send typing_start once.
+         * Otherwise every keystroke would
+         * generate another socket event.
+         */
+
+        if (
+            messageInput.dataset.isTyping !== "true"
+        ) {
+
+            socket.emit(
+                "typing_start"
+            );
+
+            messageInput.dataset.isTyping =
+                "true";
+        }
 
 
         clearTimeout(
             typingTimeout
         );
 
+
+        /*
+         * If the user does not type
+         * anything for 1200ms,
+         * automatically stop typing.
+         */
 
         typingTimeout =
             setTimeout(
@@ -269,6 +341,10 @@ messageInput.addEventListener(
 );
 
 
+// ========================================
+// STOP TYPING
+// ========================================
+
 function stopTyping() {
 
     clearTimeout(
@@ -276,9 +352,17 @@ function stopTyping() {
     );
 
 
-    socket.emit(
-        "typing_stop"
-    );
+    if (
+        messageInput.dataset.isTyping === "true"
+    ) {
+
+        socket.emit(
+            "typing_stop"
+        );
+
+        messageInput.dataset.isTyping =
+            "false";
+    }
 
 }
 
@@ -381,6 +465,16 @@ function enterChat(data) {
         currentRoomCode;
 
 
+    currentUsernameElement.textContent =
+        `You: ${username}`;
+
+
+    updateParticipants(
+        data.users,
+        data.capacity
+    );
+
+
     homeScreen.classList.add(
         "hidden"
     );
@@ -409,12 +503,91 @@ function enterChat(data) {
 
     startTimer();
 
-
     messageInput.focus();
 
 }
 
+function updateParticipants(
+    users,
+    capacity
+) {
 
+    users =
+        users || [];
+
+
+    capacity =
+        capacity || 0;
+
+
+    participantCount.textContent =
+        `${users.length} / ${capacity}`;
+
+
+    participantsList.innerHTML =
+        "";
+
+
+    users.forEach(
+        (name) => {
+
+            const participant =
+                document.createElement(
+                    "span"
+                );
+
+
+            participant.className =
+                "participant";
+
+
+            if (
+                name.toLowerCase() ===
+                username.toLowerCase()
+            ) {
+
+                participant.classList.add(
+                    "you"
+                );
+
+            }
+
+
+            const dot =
+                document.createElement(
+                    "span"
+                );
+
+            dot.textContent =
+                "●";
+
+
+            const nameElement =
+                document.createElement(
+                    "span"
+                );
+
+            nameElement.textContent =
+                name;
+
+
+            participant.appendChild(
+                dot
+            );
+
+            participant.appendChild(
+                nameElement
+            );
+
+
+            participantsList.appendChild(
+                participant
+            );
+
+        }
+    );
+
+}
 // ========================================
 // ROOM ERROR
 // ========================================
@@ -445,7 +618,38 @@ socket.on(
     }
 );
 
+// ========================================
+// PARTICIPANT COUNT UPDATE
+// ========================================
 
+socket.on(
+    "room_users_update",
+    (data) => {
+
+        const users =
+            data.users || [];
+
+
+        const capacity =
+            data.capacity || 0;
+
+
+        participantCount.textContent =
+            `Participants: ${users.length} / ${capacity}`;
+
+    }
+);
+socket.on(
+    "room_users_update",
+    (data) => {
+
+        updateParticipants(
+            data.users,
+            data.capacity
+        );
+
+    }
+);
 // ========================================
 // USER LEFT
 // ========================================
@@ -454,12 +658,22 @@ socket.on(
     "user_left",
     (name) => {
 
+        /*
+         * Remove this user from the
+         * typing list as well.
+         */
+
         currentlyTypingUsers.delete(
             name
         );
 
         updateTypingIndicator();
 
+
+        /*
+         * Show notification to
+         * every remaining user.
+         */
 
         addSystemMessage(
             `${name} left the room`
@@ -543,7 +757,9 @@ function renderMessage(data) {
     );
 
 
-    // Header
+    // ====================================
+    // HEADER
+    // ====================================
 
     const header =
         document.createElement(
@@ -561,7 +777,9 @@ function renderMessage(data) {
             : `${data.username}:`;
 
 
-    // Message text
+    // ====================================
+    // MESSAGE TEXT
+    // ====================================
 
     const text =
         document.createElement(
@@ -577,7 +795,9 @@ function renderMessage(data) {
         data.message;
 
 
-    // Footer
+    // ====================================
+    // FOOTER
+    // ====================================
 
     const footer =
         document.createElement(
@@ -606,7 +826,9 @@ function renderMessage(data) {
     );
 
 
-    // Status
+    // ====================================
+    // MESSAGE STATUS
+    // ====================================
 
     let status = null;
 
@@ -636,6 +858,10 @@ function renderMessage(data) {
     }
 
 
+    // ====================================
+    // APPEND MESSAGE
+    // ====================================
+
     messageElement.appendChild(
         header
     );
@@ -656,7 +882,9 @@ function renderMessage(data) {
     );
 
 
-    // Store message
+    // ====================================
+    // STORE MESSAGE
+    // ====================================
 
     messageElements.set(
         data.id,
@@ -673,7 +901,9 @@ function renderMessage(data) {
     );
 
 
-    // Click own message
+    // ====================================
+    // CLICK OWN MESSAGE
+    // ====================================
 
     if (isMine) {
 
@@ -691,7 +921,9 @@ function renderMessage(data) {
     }
 
 
-    // Mark other user's message as seen
+    // ====================================
+    // MARK OTHER MESSAGE AS SEEN
+    // ====================================
 
     if (!isMine) {
 
@@ -724,6 +956,10 @@ function getMessageStatus(data) {
         data.seenBy || [];
 
 
+    /*
+     * Nobody else has received it.
+     */
+
     if (
         delivered.length === 0
     ) {
@@ -732,6 +968,11 @@ function getMessageStatus(data) {
 
     }
 
+
+    /*
+     * Everyone who received it
+     * has seen it.
+     */
 
     if (
         seen.length ===
@@ -742,6 +983,11 @@ function getMessageStatus(data) {
 
     }
 
+
+    /*
+     * At least one user received it,
+     * but not everyone has seen it.
+     */
 
     return "Delivered";
 
@@ -809,6 +1055,126 @@ function showMessageInfo(data) {
         data.seenBy || [];
 
 
+    // ====================================
+    // OVERALL STATUS
+    // ====================================
+
+    const overallRow =
+        document.createElement(
+            "div"
+        );
+
+
+    overallRow.className =
+        "status-row message-overall-status";
+
+
+    const overallName =
+        document.createElement(
+            "span"
+        );
+
+
+    overallName.className =
+        "status-name";
+
+
+    overallName.textContent =
+        "Overall status";
+
+
+    const overallValue =
+        document.createElement(
+            "span"
+        );
+
+
+    overallValue.className =
+        "status-value";
+
+
+    overallValue.textContent =
+        getMessageStatus(
+            data
+        );
+
+
+    overallRow.appendChild(
+        overallName
+    );
+
+
+    overallRow.appendChild(
+        overallValue
+    );
+
+
+    infoUsers.appendChild(
+        overallRow
+    );
+
+
+    // ====================================
+    // SENDER STATUS
+    // ====================================
+
+    const senderRow =
+        document.createElement(
+            "div"
+        );
+
+
+    senderRow.className =
+        "status-row";
+
+
+    const senderName =
+        document.createElement(
+            "span"
+        );
+
+
+    senderName.className =
+        "status-name";
+
+
+    senderName.textContent =
+        "You";
+
+
+    const senderStatus =
+        document.createElement(
+            "span"
+        );
+
+
+    senderStatus.className =
+        "status-value";
+
+
+    senderStatus.textContent =
+        "Sent";
+
+
+    senderRow.appendChild(
+        senderName
+    );
+
+
+    senderRow.appendChild(
+        senderStatus
+    );
+
+
+    infoUsers.appendChild(
+        senderRow
+    );
+
+
+    // ====================================
+    // RECIPIENT STATUS
+    // ====================================
+
     if (
         delivered.length === 0
     ) {
@@ -823,76 +1189,111 @@ function showMessageInfo(data) {
             "status-row";
 
 
-        row.textContent =
-            "No other users received this message.";
+        const nameElement =
+            document.createElement(
+                "span"
+            );
+
+
+        nameElement.className =
+            "status-name";
+
+
+        nameElement.textContent =
+            "Other users";
+
+
+        const statusElement =
+            document.createElement(
+                "span"
+            );
+
+
+        statusElement.className =
+            "status-value";
+
+
+        statusElement.textContent =
+            "Not delivered";
+
+
+        row.appendChild(
+            nameElement
+        );
+
+
+        row.appendChild(
+            statusElement
+        );
 
 
         infoUsers.appendChild(
             row
         );
 
+    } else {
+
+        delivered.forEach(
+            (name) => {
+
+                const row =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                row.className =
+                    "status-row";
+
+
+                const nameElement =
+                    document.createElement(
+                        "span"
+                    );
+
+
+                nameElement.className =
+                    "status-name";
+
+
+                nameElement.textContent =
+                    name;
+
+
+                const statusElement =
+                    document.createElement(
+                        "span"
+                    );
+
+
+                statusElement.className =
+                    "status-value";
+
+
+                statusElement.textContent =
+                    seen.includes(name)
+                        ? "Seen"
+                        : "Delivered";
+
+
+                row.appendChild(
+                    nameElement
+                );
+
+
+                row.appendChild(
+                    statusElement
+                );
+
+
+                infoUsers.appendChild(
+                    row
+                );
+
+            }
+        );
+
     }
-
-
-    delivered.forEach(
-        (name) => {
-
-            const row =
-                document.createElement(
-                    "div"
-                );
-
-
-            row.className =
-                "status-row";
-
-
-            const nameElement =
-                document.createElement(
-                    "span"
-                );
-
-
-            nameElement.className =
-                "status-name";
-
-
-            nameElement.textContent =
-                name;
-
-
-            const statusElement =
-                document.createElement(
-                    "span"
-                );
-
-
-            statusElement.className =
-                "status-value";
-
-
-            statusElement.textContent =
-                seen.includes(name)
-                    ? "Seen"
-                    : "Delivered";
-
-
-            row.appendChild(
-                nameElement
-            );
-
-
-            row.appendChild(
-                statusElement
-            );
-
-
-            infoUsers.appendChild(
-                row
-            );
-
-        }
-    );
 
 
     messageInfoModal.classList.remove(
@@ -1055,6 +1456,7 @@ function resetChat() {
     expiresAt =
         null;
 
+
     currentlyTypingUsers.clear();
 
     messageElements.clear();
@@ -1070,6 +1472,9 @@ function resetChat() {
 
     messageInput.value =
         "";
+
+    messageInput.dataset.isTyping =
+        "false";
 
 
     messageInput.disabled =
@@ -1104,7 +1509,20 @@ function resetChat() {
     homeScreen.classList.remove(
         "hidden"
     );
+   participantsList.innerHTML =
+    "";
 
+participantCount.textContent =
+    "0 / 0";
+
+participantsList.classList.add(
+    "hidden"
+);
+
+participantsArrow.textContent =
+    "▼";
+currentUsernameElement.textContent =
+    "You: -";
 }
 
 
@@ -1115,6 +1533,10 @@ function resetChat() {
 socket.on(
     "user_typing",
     (name) => {
+
+        /*
+         * Don't show our own name.
+         */
 
         if (
             name === username
@@ -1162,7 +1584,9 @@ socket.on(
 function updateTypingIndicator() {
 
     const users =
-        [...currentlyTypingUsers];
+        [
+            ...currentlyTypingUsers
+        ];
 
 
     if (
@@ -1245,6 +1669,10 @@ function startTimer() {
 
 }
 
+
+// ========================================
+// UPDATE TIMER
+// ========================================
 
 function updateTimer() {
 
@@ -1356,6 +1784,7 @@ socket.on(
 
         connectionStatus.textContent =
             "Room expired";
+
 
         timerElement.textContent =
             "Expired";

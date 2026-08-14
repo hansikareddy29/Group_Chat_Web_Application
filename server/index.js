@@ -1,19 +1,39 @@
 const express = require("express");
+
 const http = require("http");
-const { Server } = require("socket.io");
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
+const {
+    Server
+} = require("socket.io");
 
-app.use(express.static("public"));
+
+const app =
+    express();
+
+
+const server =
+    http.createServer(
+        app
+    );
+
+
+const io =
+    new Server(
+        server
+    );
+
+
+app.use(
+    express.static("public")
+);
 
 
 // ========================================
 // ACTIVE ROOMS
 // ========================================
 
-const rooms = new Map();
+const rooms =
+    new Map();
 
 
 // ========================================
@@ -21,10 +41,12 @@ const rooms = new Map();
 // ========================================
 
 function generateRoomCode() {
+
     return Math.random()
         .toString(36)
         .substring(2, 8)
         .toUpperCase();
+
 }
 
 
@@ -32,35 +54,64 @@ function generateRoomCode() {
 // START EMPTY ROOM GRACE PERIOD
 // ========================================
 
-function startEmptyRoomTimer(roomCode, room) {
+function startEmptyRoomTimer(
+    roomCode,
+    room
+) {
 
-    if (room.emptyTimer) {
-        clearTimeout(room.emptyTimer);
+    if (
+        room.emptyTimer
+    ) {
+
+        clearTimeout(
+            room.emptyTimer
+        );
+
     }
+
 
     console.log(
         `Room ${roomCode} is empty. Starting 2-minute grace period.`
     );
 
-    room.emptyTimer = setTimeout(() => {
 
-        const currentRoom = rooms.get(roomCode);
+    room.emptyTimer =
+        setTimeout(
+            () => {
 
-        if (
-            currentRoom &&
-            currentRoom.users.size === 0
-        ) {
+                const currentRoom =
+                    rooms.get(
+                        roomCode
+                    );
 
-            clearRoomTimers(currentRoom);
 
-            rooms.delete(roomCode);
+                if (
+                    currentRoom &&
+                    currentRoom.users.size === 0
+                ) {
 
-            console.log(
-                `Room ${roomCode} deleted after grace period`
-            );
-        }
+                    clearRoomTimers(
+                        currentRoom
+                    );
 
-    }, 2 * 60 * 1000);
+
+                    rooms.delete(
+                        roomCode
+                    );
+
+
+                    console.log(
+                        `Room ${roomCode} deleted after grace period`
+                    );
+
+                }
+
+            },
+
+            2 * 60 * 1000
+
+        );
+
 }
 
 
@@ -70,21 +121,45 @@ function startEmptyRoomTimer(roomCode, room) {
 
 function clearRoomTimers(room) {
 
-    if (room.emptyTimer) {
-        clearTimeout(room.emptyTimer);
-        room.emptyTimer = null;
+    if (
+        room.emptyTimer
+    ) {
+
+        clearTimeout(
+            room.emptyTimer
+        );
+
+        room.emptyTimer =
+            null;
+
     }
 
-    if (room.durationTimer) {
-        clearTimeout(room.durationTimer);
-        room.durationTimer = null;
+
+    if (
+        room.durationTimer
+    ) {
+
+        clearTimeout(
+            room.durationTimer
+        );
+
+        room.durationTimer =
+            null;
+
     }
+
 
     room.warningTimers.forEach(
-        timer => clearTimeout(timer)
+        timer =>
+            clearTimeout(
+                timer
+            )
     );
 
-    room.warningTimers = [];
+
+    room.warningTimers =
+        [];
+
 }
 
 
@@ -92,769 +167,1038 @@ function clearRoomTimers(room) {
 // CONNECTION
 // ========================================
 
-io.on("connection", (socket) => {
-
-    console.log(
-        "User connected:",
-        socket.id
-    );
-
-
-    // ====================================
-    // CREATE ROOM
-    // ====================================
-
-    socket.on("create_room", (data) => {
-
-        const username =
-            String(data.username || "").trim();
-
-        const capacity =
-            Number(data.capacity);
-
-        const duration =
-            data.duration === "none"
-                ? null
-                : Number(data.duration);
-
-
-        // Username validation
-
-        if (!username) {
-
-            socket.emit(
-                "room_error",
-                "Username is required."
-            );
-
-            return;
-        }
-
-
-        // Capacity validation
-
-        if (
-            !Number.isInteger(capacity) ||
-            capacity < 2 ||
-            capacity > 100
-        ) {
-
-            socket.emit(
-                "room_error",
-                "Room capacity must be between 2 and 100."
-            );
-
-            return;
-        }
-
-
-        // Duration validation
-
-        if (
-            duration !== null &&
-            (
-                !Number.isInteger(duration) ||
-                duration < 1 ||
-                duration > 120
-            )
-        ) {
-
-            socket.emit(
-                "room_error",
-                "Room duration must be between 1 and 120 minutes."
-            );
-
-            return;
-        }
-
-
-        // Generate unique room code
-
-        let roomCode;
-
-        do {
-
-            roomCode =
-                generateRoomCode();
-
-        } while (rooms.has(roomCode));
-
-
-        // Calculate expiry
-
-        const expiresAt =
-            duration === null
-                ? null
-                : Date.now() +
-                  duration * 60 * 1000;
-
-
-        // Create room
-
-        const room = {
-
-            capacity:
-                capacity,
-
-            duration:
-                duration,
-
-            expiresAt:
-                expiresAt,
-
-            users:
-                new Map(),
-
-            messages:
-                new Map(),
-
-            emptyTimer:
-                null,
-
-            durationTimer:
-                null,
-
-            warningTimers:
-                []
-        };
-
-
-        rooms.set(
-            roomCode,
-            room
-        );
-
-
-        // Add creator
-
-        room.users.set(
-            socket.id,
-            username
-        );
-
-
-        socket.username =
-            username;
-
-        socket.roomCode =
-            roomCode;
-
-
-        socket.join(
-            roomCode
-        );
-
+io.on(
+    "connection",
+    (socket) => {
 
         console.log(
-            `${username} created room ${roomCode} ` +
-            `(capacity: ${capacity})`
+            "User connected:",
+            socket.id
         );
 
 
         // ====================================
-        // ROOM EXPIRY
+        // CREATE ROOM
         // ====================================
 
-        if (duration !== null) {
+        socket.on(
+            "create_room",
+            (data) => {
 
-            room.durationTimer =
-                setTimeout(() => {
+                const username =
+                    String(
+                        data.username || ""
+                    ).trim();
 
-                    console.log(
-                        `Room ${roomCode} expired`
+
+                const capacity =
+                    Number(
+                        data.capacity
                     );
 
 
-                    io.to(roomCode).emit(
-                        "room_expired"
+                const duration =
+                    data.duration === "none"
+                        ? null
+                        : Number(
+                            data.duration
+                        );
+
+
+                // ==============================
+                // USERNAME VALIDATION
+                // ==============================
+
+                if (
+                    !username
+                ) {
+
+                    socket.emit(
+                        "room_error",
+                        "Username is required."
                     );
 
+                    return;
 
-                    clearRoomTimers(
-                        room
+                }
+
+
+                // ==============================
+                // CAPACITY VALIDATION
+                // ==============================
+
+                if (
+                    !Number.isInteger(
+                        capacity
+                    ) ||
+                    capacity < 2 ||
+                    capacity > 100
+                ) {
+
+                    socket.emit(
+                        "room_error",
+                        "Room capacity must be between 2 and 100."
                     );
 
+                    return;
 
-                    rooms.delete(
+                }
+
+
+                // ==============================
+                // DURATION VALIDATION
+                // ==============================
+
+                if (
+                    duration !== null &&
+                    (
+                        !Number.isInteger(
+                            duration
+                        ) ||
+                        duration < 1 ||
+                        duration > 120
+                    )
+                ) {
+
+                    socket.emit(
+                        "room_error",
+                        "Room duration must be between 1 and 120 minutes."
+                    );
+
+                    return;
+
+                }
+
+
+                // ==============================
+                // GENERATE ROOM CODE
+                // ==============================
+
+                let roomCode;
+
+
+                do {
+
+                    roomCode =
+                        generateRoomCode();
+
+                } while (
+                    rooms.has(
+                        roomCode
+                    )
+                );
+
+
+                // ==============================
+                // CALCULATE EXPIRY
+                // ==============================
+
+                const expiresAt =
+                    duration === null
+                        ? null
+                        : Date.now() +
+                          duration *
+                          60 *
+                          1000;
+
+
+                // ==============================
+                // CREATE ROOM
+                // ==============================
+
+                const room = {
+
+                    capacity:
+                        capacity,
+
+                    duration:
+                        duration,
+
+                    expiresAt:
+                        expiresAt,
+
+                    users:
+                        new Map(),
+
+                    messages:
+                        new Map(),
+
+                    emptyTimer:
+                        null,
+
+                    durationTimer:
+                        null,
+
+                    warningTimers:
+                        []
+
+                };
+
+
+                rooms.set(
+                    roomCode,
+                    room
+                );
+
+
+                // ==============================
+                // ADD CREATOR
+                // ==============================
+
+                room.users.set(
+                    socket.id,
+                    username
+                );
+
+
+                socket.username =
+                    username;
+
+
+                socket.roomCode =
+                    roomCode;
+
+
+                socket.join(
+                    roomCode
+                );
+
+
+                console.log(
+                    `${username} created room ${roomCode} ` +
+                    `(capacity: ${capacity})`
+                );
+
+
+                // ====================================
+                // ROOM EXPIRY
+                // ====================================
+
+                if (
+                    duration !== null
+                ) {
+
+                    room.durationTimer =
+                        setTimeout(
+                            () => {
+
+                                console.log(
+                                    `Room ${roomCode} expired`
+                                );
+
+
+                                io.to(
+                                    roomCode
+                                ).emit(
+                                    "room_expired"
+                                );
+
+
+                                clearRoomTimers(
+                                    room
+                                );
+
+
+                                rooms.delete(
+                                    roomCode
+                                );
+
+                            },
+
+                            duration *
+                            60 *
+                            1000
+
+                        );
+
+
+                    // ====================================
+                    // 5 MINUTE WARNING
+                    // ====================================
+
+                    if (
+                        duration > 5
+                    ) {
+
+                        const fiveMinuteTimer =
+                            setTimeout(
+                                () => {
+
+                                    io.to(
+                                        roomCode
+                                    ).emit(
+                                        "room_warning",
+                                        {
+                                            message:
+                                                "Room expires in 5 minutes."
+                                        }
+                                    );
+
+                                },
+
+                                (
+                                    duration - 5
+                                ) *
+                                60 *
+                                1000
+
+                            );
+
+
+                        room.warningTimers.push(
+                            fiveMinuteTimer
+                        );
+
+                    }
+
+
+                    // ====================================
+                    // 1 MINUTE WARNING
+                    // ====================================
+
+                    if (
+                        duration > 1
+                    ) {
+
+                        const oneMinuteTimer =
+                            setTimeout(
+                                () => {
+
+                                    io.to(
+                                        roomCode
+                                    ).emit(
+                                        "room_warning",
+                                        {
+                                            message:
+                                                "Room expires in 1 minute."
+                                        }
+                                    );
+
+                                },
+
+                                (
+                                    duration - 1
+                                ) *
+                                60 *
+                                1000
+
+                            );
+
+
+                        room.warningTimers.push(
+                            oneMinuteTimer
+                        );
+
+                    }
+
+                }
+
+
+                // ====================================
+                // TELL CREATOR
+                // ====================================
+
+ socket.emit(
+    "room_created",
+    {
+        roomCode:
+            roomCode,
+
+        expiresAt:
+            expiresAt,
+
+        duration:
+            duration,
+
+        capacity:
+            room.capacity,
+
+        users:
+            [...room.users.values()]
+    }
+);
+
+            }
+        );
+
+
+        // ====================================
+        // JOIN ROOM
+        // ====================================
+
+        socket.on(
+            "join_room",
+            (data) => {
+
+                const username =
+                    String(
+                        data.username || ""
+                    ).trim();
+
+
+                const roomCode =
+                    String(
+                        data.roomCode || ""
+                    )
+                    .trim()
+                    .toUpperCase();
+
+
+                // ==============================
+                // USERNAME
+                // ==============================
+
+                if (
+                    !username
+                ) {
+
+                    socket.emit(
+                        "room_error",
+                        "Username is required."
+                    );
+
+                    return;
+
+                }
+
+
+                // ==============================
+                // ROOM
+                // ==============================
+
+                const room =
+                    rooms.get(
                         roomCode
                     );
 
-                }, duration * 60 * 1000);
 
+                if (
+                    !room
+                ) {
 
-            // ====================================
-            // 5 MINUTE WARNING
-            // ====================================
+                    socket.emit(
+                        "room_error",
+                        "Room does not exist or has expired."
+                    );
 
-            if (duration > 5) {
+                    return;
 
-                const fiveMinuteTimer =
-                    setTimeout(() => {
-
-                        io.to(roomCode).emit(
-                            "room_warning",
-                            {
-                                message:
-                                    "Room expires in 5 minutes."
-                            }
-                        );
-
-                    }, (duration - 5) * 60 * 1000);
-
-
-                room.warningTimers.push(
-                    fiveMinuteTimer
-                );
-            }
-
-
-            // ====================================
-            // 1 MINUTE WARNING
-            // ====================================
-
-            if (duration > 1) {
-
-                const oneMinuteTimer =
-                    setTimeout(() => {
-
-                        io.to(roomCode).emit(
-                            "room_warning",
-                            {
-                                message:
-                                    "Room expires in 1 minute."
-                            }
-                        );
-
-                    }, (duration - 1) * 60 * 1000);
-
-
-                room.warningTimers.push(
-                    oneMinuteTimer
-                );
-            }
-
-        }
-
-
-        // Tell creator
-
-        socket.emit(
-            "room_created",
-            {
-                roomCode:
-                    roomCode,
-
-                expiresAt:
-                    expiresAt,
-
-                duration:
-                    duration,
-
-                users:
-                    [...room.users.values()]
-            }
-        );
-
-    });
-
-
-    // ====================================
-    // JOIN ROOM
-    // ====================================
-
-    socket.on("join_room", (data) => {
-
-        const username =
-            String(data.username || "").trim();
-
-        const roomCode =
-            String(data.roomCode || "")
-                .trim()
-                .toUpperCase();
-
-
-        if (!username) {
-
-            socket.emit(
-                "room_error",
-                "Username is required."
-            );
-
-            return;
-        }
-
-
-        const room =
-            rooms.get(roomCode);
-
-
-        if (!room) {
-
-            socket.emit(
-                "room_error",
-                "Room does not exist or has expired."
-            );
-
-            return;
-        }
-
-
-        // Check expiry
-
-        if (
-            room.expiresAt !== null &&
-            Date.now() >= room.expiresAt
-        ) {
-
-            socket.emit(
-                "room_error",
-                "This room has expired."
-            );
-
-            return;
-        }
-
-
-        // Capacity
-
-        if (
-            room.users.size >=
-            room.capacity
-        ) {
-
-            socket.emit(
-                "room_error",
-                "Room is full."
-            );
-
-            return;
-        }
-
-
-        // Unique username
-
-        const usernameExists =
-            [...room.users.values()]
-                .some(
-                    existingUsername =>
-                        existingUsername.toLowerCase() ===
-                        username.toLowerCase()
-                );
-
-
-        if (usernameExists) {
-
-            socket.emit(
-                "room_error",
-                "This username is already being used in this room."
-            );
-
-            return;
-        }
-
-
-        // Cancel empty-room timer
-
-        if (room.emptyTimer) {
-
-            clearTimeout(
-                room.emptyTimer
-            );
-
-            room.emptyTimer =
-                null;
-
-            console.log(
-                `Room ${roomCode} grace period cancelled`
-            );
-        }
-
-
-        // Add user
-
-        room.users.set(
-            socket.id,
-            username
-        );
-
-
-        socket.username =
-            username;
-
-        socket.roomCode =
-            roomCode;
-
-
-        socket.join(
-            roomCode
-        );
-
-
-        console.log(
-            `${username} joined ${roomCode} ` +
-            `(${room.users.size}/${room.capacity})`
-        );
-
-
-        // Tell joining user
-
-        socket.emit(
-            "room_joined",
-            {
-                roomCode:
-                    roomCode,
-
-                expiresAt:
-                    room.expiresAt,
-
-                duration:
-                    room.duration,
-
-                users:
-                    [...room.users.values()]
-            }
-        );
-
-
-        // Send previous messages
-
-        for (
-            const message of room.messages.values()
-        ) {
-
-            socket.emit(
-                "chat_message",
-                {
-                    ...message
                 }
-            );
-        }
 
 
-        // Notify existing users
+                // ==============================
+                // EXPIRY
+                // ==============================
 
-        socket.to(roomCode).emit(
-            "user_joined",
-            username
-        );
+                if (
+                    room.expiresAt !== null &&
+                    Date.now() >=
+                    room.expiresAt
+                ) {
 
-    });
+                    socket.emit(
+                        "room_error",
+                        "This room has expired."
+                    );
 
+                    return;
 
-    // ====================================
-    // CHAT MESSAGE
-    // ====================================
-
-    socket.on("chat_message", (data) => {
-
-        const roomCode =
-            socket.roomCode;
-
-        const room =
-            rooms.get(roomCode);
+                }
 
 
-        if (!room) {
-            return;
-        }
+                // ==============================
+                // CAPACITY
+                // ==============================
+
+                if (
+                    room.users.size >=
+                    room.capacity
+                ) {
+
+                    socket.emit(
+                        "room_error",
+                        "Room is full."
+                    );
+
+                    return;
+
+                }
 
 
-        if (
-            !room.users.has(socket.id)
-        ) {
+                // ==============================
+                // UNIQUE USERNAME
+                // ==============================
 
-            return;
-        }
-
-
-        const message =
-            String(data.message || "").trim();
-
-
-        if (!message) {
-            return;
-        }
-
-
-        if (message.length > 1000) {
-            return;
-        }
+                const usernameExists =
+                    [
+                        ...room.users.values()
+                    ]
+                    .some(
+                        existingUsername =>
+                            existingUsername
+                                .toLowerCase() ===
+                            username.toLowerCase()
+                    );
 
 
-        const username =
-            room.users.get(
-                socket.id
-            );
+                if (
+                    usernameExists
+                ) {
+
+                    socket.emit(
+                        "room_error",
+                        "This username is already being used in this room."
+                    );
+
+                    return;
+
+                }
 
 
-        // Unique message ID
+                // ==============================
+                // CANCEL EMPTY TIMER
+                // ==============================
 
-        const messageId =
-            `${Date.now()}-${Math.random()
-                .toString(36)
-                .substring(2, 8)}`;
+                if (
+                    room.emptyTimer
+                ) {
+
+                    clearTimeout(
+                        room.emptyTimer
+                    );
+
+                    room.emptyTimer =
+                        null;
 
 
-        // All users except sender
+                    console.log(
+                        `Room ${roomCode} grace period cancelled`
+                    );
 
-        const recipients =
-            [...room.users.entries()]
-                .filter(
-                    ([id]) =>
-                        id !== socket.id
-                )
-                .map(
-                    ([, name]) => name
+                }
+
+
+                // ==============================
+                // ADD USER
+                // ==============================
+
+                room.users.set(
+                    socket.id,
+                    username
                 );
 
 
-        const messageData = {
-
-            id:
-                messageId,
-
-            username:
-                username,
-
-            message:
-                message,
-
-            timestamp:
-                Date.now(),
-
-            senderId:
-                socket.id,
-
-            deliveredTo:
-                recipients,
-
-            seenBy:
-                []
-        };
+                socket.username =
+                    username;
 
 
-        room.messages.set(
-            messageId,
-            messageData
+                socket.roomCode =
+                    roomCode;
+
+
+                socket.join(
+                    roomCode
+                );
+
+
+                console.log(
+                    `${username} joined ${roomCode} ` +
+                    `(${room.users.size}/${room.capacity})`
+                );
+
+
+                // ==============================
+                // TELL JOINING USER
+                // ==============================
+
+ socket.emit(
+    "room_joined",
+    {
+        roomCode:
+            roomCode,
+
+        expiresAt:
+            room.expiresAt,
+
+        duration:
+            room.duration,
+
+        capacity:
+            room.capacity,
+
+        users:
+            [...room.users.values()]
+    }
+);
+
+
+                // ==============================
+                // SEND PREVIOUS MESSAGES
+                // ==============================
+
+                for (
+                    const message
+                    of room.messages.values()
+                ) {
+
+                    socket.emit(
+                        "chat_message",
+                        {
+                            ...message
+                        }
+                    );
+
+                }
+
+
+                // ==============================
+                // NOTIFY EXISTING USERS
+                // ==============================
+
+               // Notify existing users
+
+socket.to(roomCode).emit(
+    "user_joined",
+    username
+);
+
+
+// Update participant list for everyone
+
+io.to(roomCode).emit(
+    "room_users_update",
+    {
+        users:
+            [...room.users.values()],
+
+        capacity:
+            room.capacity
+    }
+);
+
+            }
         );
 
 
-        // Broadcast to room
+        // ====================================
+        // CHAT MESSAGE
+        // ====================================
 
-        io.to(roomCode).emit(
+        socket.on(
             "chat_message",
-            {
-                ...messageData
+            (data) => {
+
+                const roomCode =
+                    socket.roomCode;
+
+
+                const room =
+                    rooms.get(
+                        roomCode
+                    );
+
+
+                if (
+                    !room
+                ) {
+                    return;
+                }
+
+
+                if (
+                    !room.users.has(
+                        socket.id
+                    )
+                ) {
+                    return;
+                }
+
+
+                const message =
+                    String(
+                        data.message || ""
+                    ).trim();
+
+
+                if (
+                    !message
+                ) {
+                    return;
+                }
+
+
+                if (
+                    message.length > 1000
+                ) {
+                    return;
+                }
+
+
+                const username =
+                    room.users.get(
+                        socket.id
+                    );
+
+
+                // ==============================
+                // MESSAGE ID
+                // ==============================
+
+                const messageId =
+                    `${Date.now()}-${Math.random()
+                        .toString(36)
+                        .substring(2, 8)}`;
+
+
+                // ==============================
+                // RECIPIENTS
+                // ==============================
+
+                const recipients =
+                    [
+                        ...room.users.entries()
+                    ]
+                    .filter(
+                        ([id]) =>
+                            id !== socket.id
+                    )
+                    .map(
+                        ([, name]) =>
+                            name
+                    );
+
+
+                // ==============================
+                // MESSAGE DATA
+                // ==============================
+
+                const messageData = {
+
+                    id:
+                        messageId,
+
+                    username:
+                        username,
+
+                    message:
+                        message,
+
+                    timestamp:
+                        Date.now(),
+
+                    senderId:
+                        socket.id,
+
+                    deliveredTo:
+                        recipients,
+
+                    seenBy:
+                        []
+
+                };
+
+
+                // ==============================
+                // STORE
+                // ==============================
+
+                room.messages.set(
+                    messageId,
+                    messageData
+                );
+
+
+                // ==============================
+                // BROADCAST
+                // ==============================
+
+                io.to(
+                    roomCode
+                ).emit(
+                    "chat_message",
+                    {
+                        ...messageData
+                    }
+                );
+
             }
         );
 
-    });
+
+        // ====================================
+        // MESSAGE SEEN
+        // ====================================
+
+        socket.on(
+            "message_seen",
+            (data) => {
+
+                const room =
+                    rooms.get(
+                        socket.roomCode
+                    );
 
 
-    // ====================================
-    // MESSAGE SEEN
-    // ====================================
-
-    socket.on("message_seen", (data) => {
-
-        const room =
-            rooms.get(
-                socket.roomCode
-            );
+                if (
+                    !room
+                ) {
+                    return;
+                }
 
 
-        if (!room) {
-            return;
-        }
+                const message =
+                    room.messages.get(
+                        data.messageId
+                    );
 
 
-        const message =
-            room.messages.get(
-                data.messageId
-            );
+                if (
+                    !message
+                ) {
+                    return;
+                }
 
 
-        if (!message) {
-            return;
-        }
+                const username =
+                    room.users.get(
+                        socket.id
+                    );
 
 
-        const username =
-            room.users.get(
-                socket.id
-            );
+                if (
+                    !username
+                ) {
+                    return;
+                }
 
 
-        if (!username) {
-            return;
-        }
+                // ==============================
+                // SENDER CANNOT SEE OWN MESSAGE
+                // ==============================
+
+                if (
+                    message.senderId ===
+                    socket.id
+                ) {
+
+                    return;
+
+                }
 
 
-        // Sender cannot mark own message as seen
+                // ==============================
+                // USER MUST BE RECIPIENT
+                // ==============================
 
-        if (
-            message.senderId ===
-            socket.id
-        ) {
+                if (
+                    !message.deliveredTo.includes(
+                        username
+                    )
+                ) {
 
-            return;
-        }
+                    return;
 
-
-        // Make sure this user was a recipient
-
-        if (
-            !message.deliveredTo.includes(
-                username
-            )
-        ) {
-
-            return;
-        }
+                }
 
 
-        // Add user to seen list only once
+                // ==============================
+                // ADD TO SEEN LIST
+                // ==============================
 
-        if (
-            !message.seenBy.includes(
-                username
-            )
-        ) {
+                if (
+                    !message.seenBy.includes(
+                        username
+                    )
+                ) {
 
-            message.seenBy.push(
-                username
-            );
-        }
+                    message.seenBy.push(
+                        username
+                    );
+
+                }
 
 
-        // Update sender
+                // ==============================
+                // UPDATE SENDER
+                // ==============================
 
-        io.to(message.senderId).emit(
-            "message_status_update",
-            {
-                messageId:
-                    message.id,
+                io.to(
+                    message.senderId
+                ).emit(
+                    "message_status_update",
+                    {
 
-                deliveredTo:
-                    message.deliveredTo,
+                        messageId:
+                            message.id,
 
-                seenBy:
-                    message.seenBy
+                        deliveredTo:
+                            message.deliveredTo,
+
+                        seenBy:
+                            message.seenBy
+
+                    }
+                );
+
             }
         );
 
-    });
+
+        // ====================================
+        // TYPING START
+        // ====================================
+
+        socket.on(
+            "typing_start",
+            () => {
+
+                const roomCode =
+                    socket.roomCode;
 
 
-    // ====================================
-    // TYPING START
-    // ====================================
-
-    socket.on("typing_start", () => {
-
-        const roomCode =
-            socket.roomCode;
-
-        const room =
-            rooms.get(roomCode);
+                const room =
+                    rooms.get(
+                        roomCode
+                    );
 
 
-        if (!room) {
-            return;
-        }
+                if (
+                    !room
+                ) {
+                    return;
+                }
 
 
-        if (
-            !room.users.has(socket.id)
-        ) {
-
-            return;
-        }
-
-
-        const username =
-            room.users.get(
-                socket.id
-            );
+                if (
+                    !room.users.has(
+                        socket.id
+                    )
+                ) {
+                    return;
+                }
 
 
-        socket.to(roomCode).emit(
-            "user_typing",
-            username
+                const username =
+                    room.users.get(
+                        socket.id
+                    );
+
+
+                /*
+                 * Send to everyone EXCEPT
+                 * the person typing.
+                 */
+
+                socket.to(
+                    roomCode
+                ).emit(
+                    "user_typing",
+                    username
+                );
+
+            }
         );
 
-    });
+
+        // ====================================
+        // TYPING STOP
+        // ====================================
+
+        socket.on(
+            "typing_stop",
+            () => {
+
+                const roomCode =
+                    socket.roomCode;
 
 
-    // ====================================
-    // TYPING STOP
-    // ====================================
-
-    socket.on("typing_stop", () => {
-
-        const roomCode =
-            socket.roomCode;
+                if (
+                    !roomCode
+                ) {
+                    return;
+                }
 
 
-        if (!roomCode) {
-            return;
-        }
+                const username =
+                    socket.username;
 
 
-        const username =
-            socket.username;
+                if (
+                    !username
+                ) {
+                    return;
+                }
 
 
-        if (!username) {
-            return;
-        }
+                socket.to(
+                    roomCode
+                ).emit(
+                    "user_stopped_typing",
+                    username
+                );
 
-
-        socket.to(roomCode).emit(
-            "user_stopped_typing",
-            username
+            }
         );
 
-    });
+
+        // ====================================
+        // LEAVE ROOM
+        // ====================================
+
+        socket.on(
+            "leave_room",
+            () => {
+
+                if (
+                    !socket.roomCode ||
+                    !socket.username
+                ) {
+
+                    return;
+
+                }
 
 
-    // ====================================
-    // LEAVE ROOM
-    // ====================================
+                leaveRoom(
+                    socket
+                );
 
-    socket.on("leave_room", () => {
-
-        leaveRoom(
-            socket
+            }
         );
 
-    });
 
+        // ====================================
+        // DISCONNECT
+        // ====================================
 
-    // ====================================
-    // DISCONNECT
-    // ====================================
+        socket.on(
+            "disconnect",
+            () => {
 
-    socket.on("disconnect", () => {
+                leaveRoom(
+                    socket,
+                    true
+                );
 
-        leaveRoom(
-            socket,
-            true
+            }
         );
 
-    });
-
-});
+    }
+);
 
 
 // ========================================
 // LEAVE ROOM FUNCTION
 // ========================================
 
-function leaveRoom(socket, isDisconnect = false) {
+function leaveRoom(
+    socket,
+    isDisconnect = false
+) {
 
     const roomCode =
         socket.roomCode;
+
 
     const username =
         socket.username;
@@ -866,14 +1210,19 @@ function leaveRoom(socket, isDisconnect = false) {
     ) {
 
         return;
+
     }
 
 
     const room =
-        rooms.get(roomCode);
+        rooms.get(
+            roomCode
+        );
 
 
-    if (!room) {
+    if (
+        !room
+    ) {
 
         socket.roomCode =
             null;
@@ -882,13 +1231,18 @@ function leaveRoom(socket, isDisconnect = false) {
             null;
 
         return;
+
     }
 
 
-    // Remove user
+    // ====================================
+    // REMOVE USER
+    // ====================================
 
     if (
-        room.users.has(socket.id)
+        room.users.has(
+            socket.id
+        )
     ) {
 
         room.users.delete(
@@ -904,32 +1258,56 @@ function leaveRoom(socket, isDisconnect = false) {
     );
 
 
-    // Stop typing
+    // ====================================
+    // STOP TYPING
+    // ====================================
 
-    socket.to(roomCode).emit(
+    socket.to(
+        roomCode
+    ).emit(
         "user_stopped_typing",
         username
     );
 
 
-    // Notify remaining users
+    // ====================================
+    // NOTIFY EVERY REMAINING USER
+    // ====================================
 
-    socket.to(roomCode).emit(
+    socket.to(
+        roomCode
+    ).emit(
         "user_left",
         username
     );
+// Update participant count for everyone
+io.to(roomCode).emit(
+    "room_users_update",
+    {
+        users:
+            [...room.users.values()],
 
+        capacity:
+            room.capacity
+    }
+);
 
-    // Leave Socket.IO room
+    // ====================================
+    // LEAVE SOCKET.IO ROOM
+    // ====================================
 
     socket.leave(
         roomCode
     );
 
 
-    // Explicit leave acknowledgement
+    // ====================================
+    // ACKNOWLEDGE EXPLICIT LEAVE
+    // ====================================
 
-    if (!isDisconnect) {
+    if (
+        !isDisconnect
+    ) {
 
         socket.emit(
             "room_left"
@@ -938,16 +1316,21 @@ function leaveRoom(socket, isDisconnect = false) {
     }
 
 
-    // Clear local socket room data
+    // ====================================
+    // CLEAR SOCKET DATA
+    // ====================================
 
     socket.roomCode =
         null;
+
 
     socket.username =
         null;
 
 
-    // Start grace period if empty
+    // ====================================
+    // EMPTY ROOM GRACE PERIOD
+    // ====================================
 
     if (
         room.users.size === 0
@@ -968,6 +1351,7 @@ function leaveRoom(socket, isDisconnect = false) {
 // ========================================
 
 const PORT = 3000;
+
 
 server.listen(
     PORT,
