@@ -1,26 +1,15 @@
 const express = require("express");
-
 const http = require("http");
-
-const {
-    Server
-} = require("socket.io");
+const { Server } = require("socket.io");
 
 
-const app =
-    express();
-
+const app = express();
 
 const server =
-    http.createServer(
-        app
-    );
-
+    http.createServer(app);
 
 const io =
-    new Server(
-        server
-    );
+    new Server(server);
 
 
 app.use(
@@ -59,9 +48,7 @@ function startEmptyRoomTimer(
     room
 ) {
 
-    if (
-        room.emptyTimer
-    ) {
+    if (room.emptyTimer) {
 
         clearTimeout(
             room.emptyTimer
@@ -87,7 +74,8 @@ function startEmptyRoomTimer(
 
                 if (
                     currentRoom &&
-                    currentRoom.users.size === 0
+                    currentRoom.users.size ===
+                    0
                 ) {
 
                     clearRoomTimers(
@@ -107,9 +95,7 @@ function startEmptyRoomTimer(
                 }
 
             },
-
             2 * 60 * 1000
-
         );
 
 }
@@ -121,13 +107,12 @@ function startEmptyRoomTimer(
 
 function clearRoomTimers(room) {
 
-    if (
-        room.emptyTimer
-    ) {
+    if (room.emptyTimer) {
 
         clearTimeout(
             room.emptyTimer
         );
+
 
         room.emptyTimer =
             null;
@@ -135,13 +120,12 @@ function clearRoomTimers(room) {
     }
 
 
-    if (
-        room.durationTimer
-    ) {
+    if (room.durationTimer) {
 
         clearTimeout(
             room.durationTimer
         );
+
 
         room.durationTimer =
             null;
@@ -187,7 +171,8 @@ io.on(
 
                 const username =
                     String(
-                        data.username || ""
+                        data.username ||
+                        ""
                     ).trim();
 
 
@@ -198,7 +183,8 @@ io.on(
 
 
                 const duration =
-                    data.duration === "none"
+                    data.duration ===
+                    "none"
                         ? null
                         : Number(
                             data.duration
@@ -209,9 +195,7 @@ io.on(
                 // USERNAME VALIDATION
                 // ==============================
 
-                if (
-                    !username
-                ) {
+                if (!username) {
 
                     socket.emit(
                         "room_error",
@@ -271,7 +255,7 @@ io.on(
 
 
                 // ==============================
-                // GENERATE ROOM CODE
+                // GENERATE UNIQUE ROOM CODE
                 // ==============================
 
                 let roomCode;
@@ -404,11 +388,9 @@ io.on(
                                 );
 
                             },
-
                             duration *
                             60 *
                             1000
-
                         );
 
 
@@ -435,13 +417,12 @@ io.on(
                                     );
 
                                 },
-
                                 (
-                                    duration - 5
+                                    duration -
+                                    5
                                 ) *
                                 60 *
                                 1000
-
                             );
 
 
@@ -475,13 +456,12 @@ io.on(
                                     );
 
                                 },
-
                                 (
-                                    duration - 1
+                                    duration -
+                                    1
                                 ) *
                                 60 *
                                 1000
-
                             );
 
 
@@ -498,25 +478,29 @@ io.on(
                 // TELL CREATOR
                 // ====================================
 
- socket.emit(
-    "room_created",
-    {
-        roomCode:
-            roomCode,
+                socket.emit(
+                    "room_created",
+                    {
 
-        expiresAt:
-            expiresAt,
+                        roomCode:
+                            roomCode,
 
-        duration:
-            duration,
+                        expiresAt:
+                            expiresAt,
 
-        capacity:
-            room.capacity,
+                        duration:
+                            duration,
 
-        users:
-            [...room.users.values()]
-    }
-);
+                        capacity:
+                            room.capacity,
+
+                        users:
+                            [
+                                ...room.users.values()
+                            ]
+
+                    }
+                );
 
             }
         );
@@ -532,25 +516,25 @@ io.on(
 
                 const username =
                     String(
-                        data.username || ""
+                        data.username ||
+                        ""
                     ).trim();
 
 
                 const roomCode =
                     String(
-                        data.roomCode || ""
+                        data.roomCode ||
+                        ""
                     )
                     .trim()
                     .toUpperCase();
 
 
                 // ==============================
-                // USERNAME
+                // USERNAME VALIDATION
                 // ==============================
 
-                if (
-                    !username
-                ) {
+                if (!username) {
 
                     socket.emit(
                         "room_error",
@@ -563,7 +547,7 @@ io.on(
 
 
                 // ==============================
-                // ROOM
+                // FIND ROOM
                 // ==============================
 
                 const room =
@@ -572,9 +556,7 @@ io.on(
                     );
 
 
-                if (
-                    !room
-                ) {
+                if (!room) {
 
                     socket.emit(
                         "room_error",
@@ -587,13 +569,14 @@ io.on(
 
 
                 // ==============================
-                // EXPIRY
+                // CHECK EXPIRY
                 // ==============================
 
                 if (
-                    room.expiresAt !== null &&
+                    room.expiresAt !==
+                        null &&
                     Date.now() >=
-                    room.expiresAt
+                        room.expiresAt
                 ) {
 
                     socket.emit(
@@ -632,12 +615,12 @@ io.on(
                 const usernameExists =
                     [
                         ...room.users.values()
-                    ]
-                    .some(
+                    ].some(
                         existingUsername =>
                             existingUsername
                                 .toLowerCase() ===
-                            username.toLowerCase()
+                            username
+                                .toLowerCase()
                     );
 
 
@@ -666,6 +649,7 @@ io.on(
                     clearTimeout(
                         room.emptyTimer
                     );
+
 
                     room.emptyTimer =
                         null;
@@ -711,25 +695,29 @@ io.on(
                 // TELL JOINING USER
                 // ==============================
 
- socket.emit(
-    "room_joined",
-    {
-        roomCode:
-            roomCode,
+                socket.emit(
+                    "room_joined",
+                    {
 
-        expiresAt:
-            room.expiresAt,
+                        roomCode:
+                            roomCode,
 
-        duration:
-            room.duration,
+                        expiresAt:
+                            room.expiresAt,
 
-        capacity:
-            room.capacity,
+                        duration:
+                            room.duration,
 
-        users:
-            [...room.users.values()]
-    }
-);
+                        capacity:
+                            room.capacity,
+
+                        users:
+                            [
+                                ...room.users.values()
+                            ]
+
+                    }
+                );
 
 
                 // ==============================
@@ -737,8 +725,8 @@ io.on(
                 // ==============================
 
                 for (
-                    const message
-                    of room.messages.values()
+                    const message of
+                    room.messages.values()
                 ) {
 
                     socket.emit(
@@ -755,26 +743,35 @@ io.on(
                 // NOTIFY EXISTING USERS
                 // ==============================
 
-               // Notify existing users
+                socket.to(
+                    roomCode
+                ).emit(
+                    "user_joined",
+                    username
+                );
 
-socket.to(roomCode).emit(
-    "user_joined",
-    username
-);
 
+                // ==============================
+                // UPDATE PARTICIPANTS
+                // FOR EVERYONE
+                // ==============================
 
-// Update participant list for everyone
+                io.to(
+                    roomCode
+                ).emit(
+                    "room_users_update",
+                    {
 
-io.to(roomCode).emit(
-    "room_users_update",
-    {
-        users:
-            [...room.users.values()],
+                        users:
+                            [
+                                ...room.users.values()
+                            ],
 
-        capacity:
-            room.capacity
-    }
-);
+                        capacity:
+                            room.capacity
+
+                    }
+                );
 
             }
         );
@@ -798,10 +795,10 @@ io.to(roomCode).emit(
                     );
 
 
-                if (
-                    !room
-                ) {
+                if (!room) {
+
                     return;
+
                 }
 
 
@@ -810,27 +807,33 @@ io.to(roomCode).emit(
                         socket.id
                     )
                 ) {
+
                     return;
+
                 }
 
 
                 const message =
                     String(
-                        data.message || ""
+                        data.message ||
+                        ""
                     ).trim();
 
 
-                if (
-                    !message
-                ) {
+                if (!message) {
+
                     return;
+
                 }
 
 
                 if (
-                    message.length > 1000
+                    message.length >
+                    1000
                 ) {
+
                     return;
+
                 }
 
 
@@ -841,7 +844,7 @@ io.to(roomCode).emit(
 
 
                 // ==============================
-                // MESSAGE ID
+                // UNIQUE MESSAGE ID
                 // ==============================
 
                 const messageId =
@@ -860,7 +863,8 @@ io.to(roomCode).emit(
                     ]
                     .filter(
                         ([id]) =>
-                            id !== socket.id
+                            id !==
+                            socket.id
                     )
                     .map(
                         ([, name]) =>
@@ -897,10 +901,6 @@ io.to(roomCode).emit(
 
                 };
 
-
-                // ==============================
-                // STORE
-                // ==============================
 
                 room.messages.set(
                     messageId,
@@ -939,10 +939,10 @@ io.to(roomCode).emit(
                     );
 
 
-                if (
-                    !room
-                ) {
+                if (!room) {
+
                     return;
+
                 }
 
 
@@ -952,10 +952,10 @@ io.to(roomCode).emit(
                     );
 
 
-                if (
-                    !message
-                ) {
+                if (!message) {
+
                     return;
+
                 }
 
 
@@ -965,16 +965,15 @@ io.to(roomCode).emit(
                     );
 
 
-                if (
-                    !username
-                ) {
+                if (!username) {
+
                     return;
+
                 }
 
 
-                // ==============================
-                // SENDER CANNOT SEE OWN MESSAGE
-                // ==============================
+                // Sender cannot mark own message
+                // as seen.
 
                 if (
                     message.senderId ===
@@ -986,9 +985,8 @@ io.to(roomCode).emit(
                 }
 
 
-                // ==============================
-                // USER MUST BE RECIPIENT
-                // ==============================
+                // Make sure this user
+                // received the message.
 
                 if (
                     !message.deliveredTo.includes(
@@ -1001,9 +999,7 @@ io.to(roomCode).emit(
                 }
 
 
-                // ==============================
-                // ADD TO SEEN LIST
-                // ==============================
+                // Add only once.
 
                 if (
                     !message.seenBy.includes(
@@ -1018,9 +1014,7 @@ io.to(roomCode).emit(
                 }
 
 
-                // ==============================
-                // UPDATE SENDER
-                // ==============================
+                // Update sender.
 
                 io.to(
                     message.senderId
@@ -1062,10 +1056,10 @@ io.to(roomCode).emit(
                     );
 
 
-                if (
-                    !room
-                ) {
+                if (!room) {
+
                     return;
+
                 }
 
 
@@ -1074,7 +1068,9 @@ io.to(roomCode).emit(
                         socket.id
                     )
                 ) {
+
                     return;
+
                 }
 
 
@@ -1083,11 +1079,6 @@ io.to(roomCode).emit(
                         socket.id
                     );
 
-
-                /*
-                 * Send to everyone EXCEPT
-                 * the person typing.
-                 */
 
                 socket.to(
                     roomCode
@@ -1112,10 +1103,10 @@ io.to(roomCode).emit(
                     socket.roomCode;
 
 
-                if (
-                    !roomCode
-                ) {
+                if (!roomCode) {
+
                     return;
+
                 }
 
 
@@ -1123,10 +1114,10 @@ io.to(roomCode).emit(
                     socket.username;
 
 
-                if (
-                    !username
-                ) {
+                if (!username) {
+
                     return;
+
                 }
 
 
@@ -1148,16 +1139,6 @@ io.to(roomCode).emit(
         socket.on(
             "leave_room",
             () => {
-
-                if (
-                    !socket.roomCode ||
-                    !socket.username
-                ) {
-
-                    return;
-
-                }
-
 
                 leaveRoom(
                     socket
@@ -1220,24 +1201,24 @@ function leaveRoom(
         );
 
 
-    if (
-        !room
-    ) {
+    if (!room) {
 
         socket.roomCode =
             null;
 
+
         socket.username =
             null;
+
 
         return;
 
     }
 
 
-    // ====================================
+    // ==============================
     // REMOVE USER
-    // ====================================
+    // ==============================
 
     if (
         room.users.has(
@@ -1258,9 +1239,9 @@ function leaveRoom(
     );
 
 
-    // ====================================
+    // ==============================
     // STOP TYPING
-    // ====================================
+    // ==============================
 
     socket.to(
         roomCode
@@ -1270,9 +1251,9 @@ function leaveRoom(
     );
 
 
-    // ====================================
-    // NOTIFY EVERY REMAINING USER
-    // ====================================
+    // ==============================
+    // NOTIFY REMAINING USERS
+    // ==============================
 
     socket.to(
         roomCode
@@ -1280,30 +1261,43 @@ function leaveRoom(
         "user_left",
         username
     );
-// Update participant count for everyone
-io.to(roomCode).emit(
-    "room_users_update",
-    {
-        users:
-            [...room.users.values()],
 
-        capacity:
-            room.capacity
-    }
-);
 
-    // ====================================
+    // ==============================
+    // UPDATE PARTICIPANT LIST
+    // FOR EVERYONE STILL IN ROOM
+    // ==============================
+
+    io.to(
+        roomCode
+    ).emit(
+        "room_users_update",
+        {
+
+            users:
+                [
+                    ...room.users.values()
+                ],
+
+            capacity:
+                room.capacity
+
+        }
+    );
+
+
+    // ==============================
     // LEAVE SOCKET.IO ROOM
-    // ====================================
+    // ==============================
 
     socket.leave(
         roomCode
     );
 
 
-    // ====================================
-    // ACKNOWLEDGE EXPLICIT LEAVE
-    // ====================================
+    // ==============================
+    // EXPLICIT LEAVE ACKNOWLEDGEMENT
+    // ==============================
 
     if (
         !isDisconnect
@@ -1316,9 +1310,9 @@ io.to(roomCode).emit(
     }
 
 
-    // ====================================
-    // CLEAR SOCKET DATA
-    // ====================================
+    // ==============================
+    // CLEAR LOCAL SOCKET DATA
+    // ==============================
 
     socket.roomCode =
         null;
@@ -1328,12 +1322,13 @@ io.to(roomCode).emit(
         null;
 
 
-    // ====================================
-    // EMPTY ROOM GRACE PERIOD
-    // ====================================
+    // ==============================
+    // START GRACE PERIOD IF EMPTY
+    // ==============================
 
     if (
-        room.users.size === 0
+        room.users.size ===
+        0
     ) {
 
         startEmptyRoomTimer(

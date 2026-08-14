@@ -24,7 +24,9 @@
 
     <div class="container">
 
-        <h1>Group Chat</h1>
+        <h1>
+            Group Chat
+        </h1>
 
         <p class="subtitle">
             Real-time WebSocket Chat Application
@@ -40,7 +42,10 @@
             class="card"
         >
 
-            <h2>Create Room</h2>
+            <h2>
+                Create Room
+            </h2>
+
 
             <input
                 type="text"
@@ -49,6 +54,7 @@
                 maxlength="20"
             >
 
+
             <input
                 type="number"
                 id="capacity"
@@ -56,6 +62,7 @@
                 min="2"
                 max="100"
             >
+
 
             <select id="duration">
 
@@ -89,6 +96,7 @@
 
             </select>
 
+
             <button id="createButton">
                 Create Room
             </button>
@@ -97,7 +105,10 @@
             <hr>
 
 
-            <h2>Join Room</h2>
+            <h2>
+                Join Room
+            </h2>
+
 
             <input
                 type="text"
@@ -106,12 +117,14 @@
                 maxlength="20"
             >
 
+
             <input
                 type="text"
                 id="roomCodeInput"
                 placeholder="Room code"
                 maxlength="6"
             >
+
 
             <button id="joinButton">
                 Join Room
@@ -135,104 +148,114 @@
             class="chat-card hidden"
         >
 
-           <div class="chat-header">
+            <div class="chat-header">
 
-    <div>
 
-        <h2>
-            Room
-            <span id="roomCode"></span>
-        </h2>
+                <!-- LEFT SIDE -->
 
-        <p id="currentUsername">
-            You: -
-        </p>
+                <div>
 
-        <div
-            id="participantsSection"
-            class="participants-section"
-        >
+                    <h2>
 
-            <div class="participants-header">
+                        Room
+                        <span id="roomCode"></span>
 
-                <strong>
-                    👥 Participants
-                </strong>
+                    </h2>
 
-                <span id="participantCount">
-                    0 / 0
-                </span>
+
+                    <!-- CURRENT USER -->
+
+                    <p id="currentUsername">
+                        You: -
+                    </p>
+
+
+                    <!-- PARTICIPANTS -->
+
+                    <div
+                        id="participantsSection"
+                        class="participants-section"
+                    >
+
+                        <!--
+                            This itself is clickable.
+                            There is NO separate button.
+                        -->
+
+                        <div
+                            id="participantsToggle"
+                            class="participants-toggle"
+                        >
+
+                            <span>
+                                👥 Participants
+                            </span>
+
+                            <span id="participantCount">
+                                0/0
+                            </span>
+
+                        </div>
+
+
+                        <!--
+                            Hidden initially.
+                            Clicking Participants
+                            shows this list.
+                        -->
+
+                        <div
+                            id="participantsList"
+                            class="participants-list hidden"
+                        ></div>
+
+                    </div>
+
+
+                    <!-- CONNECTION -->
+
+                    <p id="connectionStatus">
+                        Connected
+                    </p>
+
+                </div>
+
+
+                <!-- RIGHT SIDE -->
+
+                <div class="room-info">
+
+                    <button
+                        id="copyCodeButton"
+                        class="copy-button"
+                    >
+                        Copy Code
+                    </button>
+
+
+                    <button
+                        id="leaveButton"
+                        class="leave-button"
+                    >
+                        Leave
+                    </button>
+
+
+                    <div
+                        id="timer"
+                        class="timer"
+                    >
+                        No duration
+                    </div>
+
+                </div>
 
             </div>
 
-<div
-    id="participantsSection"
-    class="participants-section"
->
 
-    <button
-        id="participantsToggle"
-        class="participants-toggle"
-        type="button"
-    >
-        <span>
-            👥 Participants
-        </span>
-
-        <span id="participantCount">
-            0 / 0
-        </span>
-
-        <span id="participantsArrow">
-            ▼
-        </span>
-    </button>
-
-
-    <div
-        id="participantsList"
-        class="participants-list hidden"
-    ></div>
-
-</div>
-
-        </div>
-
-
-        <p id="connectionStatus">
-            Connected
-        </p>
-
-    </div>
-
-
-    <div class="room-info">
-
-        <button
-            id="copyCodeButton"
-            class="copy-button"
-        >
-            Copy Code
-        </button>
-
-        <button
-            id="leaveButton"
-            class="leave-button"
-        >
-            Leave
-        </button>
-
-        <div
-            id="timer"
-            class="timer"
-        >
-            No duration
-        </div>
-
-    </div>
-
-</div>
-
+            <!-- ============================= -->
+            <!-- MESSAGES -->
+            <!-- ============================= -->
 
             <div
                 id="messages"
@@ -240,7 +263,9 @@
             ></div>
 
 
+            <!-- ============================= -->
             <!-- TYPING INDICATOR -->
+            <!-- ============================= -->
 
             <div
                 id="typingIndicator"
@@ -248,7 +273,9 @@
             ></div>
 
 
+            <!-- ============================= -->
             <!-- MESSAGE INPUT -->
+            <!-- ============================= -->
 
             <div class="message-input-area">
 
@@ -259,6 +286,7 @@
                     maxlength="1000"
                     autocomplete="off"
                 >
+
 
                 <button id="sendButton">
                     Send
@@ -282,11 +310,16 @@
 
         <div class="modal-content">
 
-            <h2>Message Info</h2>
+            <h2>
+                Message Info
+            </h2>
+
 
             <p id="infoMessage"></p>
 
+
             <div id="infoUsers"></div>
+
 
             <button id="closeInfoButton">
                 Close

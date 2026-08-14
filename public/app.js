@@ -6,31 +6,49 @@ const socket = io();
 // ========================================
 
 const homeScreen =
-    document.getElementById("homeScreen");
+    document.getElementById(
+        "homeScreen"
+    );
 
 const createUsername =
-    document.getElementById("createUsername");
+    document.getElementById(
+        "createUsername"
+    );
 
 const capacityInput =
-    document.getElementById("capacity");
+    document.getElementById(
+        "capacity"
+    );
 
 const durationInput =
-    document.getElementById("duration");
+    document.getElementById(
+        "duration"
+    );
 
 const createButton =
-    document.getElementById("createButton");
+    document.getElementById(
+        "createButton"
+    );
 
 const joinUsername =
-    document.getElementById("joinUsername");
+    document.getElementById(
+        "joinUsername"
+    );
 
 const roomCodeInput =
-    document.getElementById("roomCodeInput");
+    document.getElementById(
+        "roomCodeInput"
+    );
 
 const joinButton =
-    document.getElementById("joinButton");
+    document.getElementById(
+        "joinButton"
+    );
 
 const errorMessage =
-    document.getElementById("errorMessage");
+    document.getElementById(
+        "errorMessage"
+    );
 
 
 // ========================================
@@ -38,17 +56,19 @@ const errorMessage =
 // ========================================
 
 const chatScreen =
-    document.getElementById("chatScreen");
+    document.getElementById(
+        "chatScreen"
+    );
 
 const roomCodeElement =
-    document.getElementById("roomCode");
-
+    document.getElementById(
+        "roomCode"
+    );
 
 const currentUsernameElement =
     document.getElementById(
         "currentUsername"
     );
-
 
 const participantCount =
     document.getElementById(
@@ -60,38 +80,50 @@ const participantsToggle =
         "participantsToggle"
     );
 
-
-const participantsArrow =
-    document.getElementById(
-        "participantsArrow"
-    );
-
-
 const participantsList =
     document.getElementById(
         "participantsList"
     );
 
+const connectionStatus =
+    document.getElementById(
+        "connectionStatus"
+    );
+
 const timerElement =
-    document.getElementById("timer");
+    document.getElementById(
+        "timer"
+    );
 
 const copyCodeButton =
-    document.getElementById("copyCodeButton");
+    document.getElementById(
+        "copyCodeButton"
+    );
 
 const leaveButton =
-    document.getElementById("leaveButton");
+    document.getElementById(
+        "leaveButton"
+    );
 
 const messagesElement =
-    document.getElementById("messages");
+    document.getElementById(
+        "messages"
+    );
 
 const messageInput =
-    document.getElementById("messageInput");
+    document.getElementById(
+        "messageInput"
+    );
 
 const sendButton =
-    document.getElementById("sendButton");
+    document.getElementById(
+        "sendButton"
+    );
 
 const typingIndicator =
-    document.getElementById("typingIndicator");
+    document.getElementById(
+        "typingIndicator"
+    );
 
 
 // ========================================
@@ -153,7 +185,8 @@ createButton.addEventListener(
     "click",
     () => {
 
-        errorMessage.textContent = "";
+        errorMessage.textContent =
+            "";
 
         const name =
             createUsername.value.trim();
@@ -170,11 +203,14 @@ createButton.addEventListener(
         socket.emit(
             "create_room",
             {
-                username: name,
+                username:
+                    name,
 
-                capacity: capacity,
+                capacity:
+                    capacity,
 
-                duration: duration
+                duration:
+                    duration
             }
         );
 
@@ -190,7 +226,8 @@ joinButton.addEventListener(
     "click",
     () => {
 
-        errorMessage.textContent = "";
+        errorMessage.textContent =
+            "";
 
         const name =
             joinUsername.value.trim();
@@ -204,47 +241,18 @@ joinButton.addEventListener(
         socket.emit(
             "join_room",
             {
-                username: name,
+                username:
+                    name,
 
-                roomCode: roomCode
+                roomCode:
+                    roomCode
             }
         );
 
     }
 );
 
-participantsToggle.addEventListener(
-    "click",
-    () => {
 
-        const isHidden =
-            participantsList.classList.contains(
-                "hidden"
-            );
-
-
-        if (isHidden) {
-
-            participantsList.classList.remove(
-                "hidden"
-            );
-
-            participantsArrow.textContent =
-                "▲";
-
-        } else {
-
-            participantsList.classList.add(
-                "hidden"
-            );
-
-            participantsArrow.textContent =
-                "▼";
-
-        }
-
-    }
-);
 // ========================================
 // SEND BUTTON
 // ========================================
@@ -264,7 +272,8 @@ messageInput.addEventListener(
     (event) => {
 
         if (
-            event.key === "Enter"
+            event.key ===
+            "Enter"
         ) {
 
             event.preventDefault();
@@ -288,44 +297,26 @@ messageInput.addEventListener(
     () => {
 
         if (
-            messageInput.value.trim() === ""
+            messageInput.value.trim() ===
+            ""
         ) {
 
             stopTyping();
 
             return;
+
         }
 
 
-        /*
-         * Only send typing_start once.
-         * Otherwise every keystroke would
-         * generate another socket event.
-         */
-
-        if (
-            messageInput.dataset.isTyping !== "true"
-        ) {
-
-            socket.emit(
-                "typing_start"
-            );
-
-            messageInput.dataset.isTyping =
-                "true";
-        }
+        socket.emit(
+            "typing_start"
+        );
 
 
         clearTimeout(
             typingTimeout
         );
 
-
-        /*
-         * If the user does not type
-         * anything for 1200ms,
-         * automatically stop typing.
-         */
 
         typingTimeout =
             setTimeout(
@@ -341,10 +332,6 @@ messageInput.addEventListener(
 );
 
 
-// ========================================
-// STOP TYPING
-// ========================================
-
 function stopTyping() {
 
     clearTimeout(
@@ -352,17 +339,9 @@ function stopTyping() {
     );
 
 
-    if (
-        messageInput.dataset.isTyping === "true"
-    ) {
-
-        socket.emit(
-            "typing_stop"
-        );
-
-        messageInput.dataset.isTyping =
-            "false";
-    }
+    socket.emit(
+        "typing_stop"
+    );
 
 }
 
@@ -378,7 +357,9 @@ function sendMessage() {
 
 
     if (!message) {
+
         return;
+
     }
 
 
@@ -391,9 +372,12 @@ function sendMessage() {
     );
 
 
-    messageInput.value = "";
+    messageInput.value =
+        "";
+
 
     stopTyping();
+
 
     messageInput.focus();
 
@@ -410,6 +394,7 @@ socket.on(
 
         username =
             createUsername.value.trim();
+
 
         enterChat(
             data
@@ -435,6 +420,7 @@ socket.on(
         username =
             joinUsername.value.trim();
 
+
         enterChat(
             data
         );
@@ -457,6 +443,7 @@ function enterChat(data) {
     currentRoomCode =
         data.roomCode;
 
+
     expiresAt =
         data.expiresAt;
 
@@ -475,9 +462,20 @@ function enterChat(data) {
     );
 
 
+    /*
+        Always start with the participant
+        list hidden when entering a room.
+    */
+
+    participantsList.classList.add(
+        "hidden"
+    );
+
+
     homeScreen.classList.add(
         "hidden"
     );
+
 
     chatScreen.classList.remove(
         "hidden"
@@ -487,11 +485,14 @@ function enterChat(data) {
     messageInput.disabled =
         false;
 
+
     sendButton.disabled =
         false;
 
+
     copyCodeButton.disabled =
         false;
+
 
     leaveButton.disabled =
         false;
@@ -503,9 +504,31 @@ function enterChat(data) {
 
     startTimer();
 
+
     messageInput.focus();
 
 }
+
+
+// ========================================
+// PARTICIPANT TOGGLE
+// ========================================
+
+participantsToggle.addEventListener(
+    "click",
+    () => {
+
+        participantsList.classList.toggle(
+            "hidden"
+        );
+
+    }
+);
+
+
+// ========================================
+// UPDATE PARTICIPANTS
+// ========================================
 
 function updateParticipants(
     users,
@@ -520,26 +543,45 @@ function updateParticipants(
         capacity || 0;
 
 
-    participantCount.textContent =
-        `${users.length} / ${capacity}`;
+    /*
+        Update the count.
 
+        Example:
+        3/10
+    */
+
+    participantCount.textContent =
+        `${users.length}/${capacity}`;
+
+
+    /*
+        Remove old list.
+    */
 
     participantsList.innerHTML =
         "";
 
+
+    /*
+        Add every user.
+    */
 
     users.forEach(
         (name) => {
 
             const participant =
                 document.createElement(
-                    "span"
+                    "div"
                 );
 
 
             participant.className =
                 "participant";
 
+
+            /*
+                Highlight current user.
+            */
 
             if (
                 name.toLowerCase() ===
@@ -553,31 +595,8 @@ function updateParticipants(
             }
 
 
-            const dot =
-                document.createElement(
-                    "span"
-                );
-
-            dot.textContent =
-                "●";
-
-
-            const nameElement =
-                document.createElement(
-                    "span"
-                );
-
-            nameElement.textContent =
-                name;
-
-
-            participant.appendChild(
-                dot
-            );
-
-            participant.appendChild(
-                nameElement
-            );
+            participant.textContent =
+                `● ${name}`;
 
 
             participantsList.appendChild(
@@ -588,6 +607,8 @@ function updateParticipants(
     );
 
 }
+
+
 // ========================================
 // ROOM ERROR
 // ========================================
@@ -618,27 +639,11 @@ socket.on(
     }
 );
 
+
 // ========================================
-// PARTICIPANT COUNT UPDATE
+// PARTICIPANT UPDATE
 // ========================================
 
-socket.on(
-    "room_users_update",
-    (data) => {
-
-        const users =
-            data.users || [];
-
-
-        const capacity =
-            data.capacity || 0;
-
-
-        participantCount.textContent =
-            `Participants: ${users.length} / ${capacity}`;
-
-    }
-);
 socket.on(
     "room_users_update",
     (data) => {
@@ -650,6 +655,8 @@ socket.on(
 
     }
 );
+
+
 // ========================================
 // USER LEFT
 // ========================================
@@ -658,22 +665,13 @@ socket.on(
     "user_left",
     (name) => {
 
-        /*
-         * Remove this user from the
-         * typing list as well.
-         */
-
         currentlyTypingUsers.delete(
             name
         );
 
+
         updateTypingIndicator();
 
-
-        /*
-         * Show notification to
-         * every remaining user.
-         */
 
         addSystemMessage(
             `${name} left the room`
@@ -736,7 +734,8 @@ socket.on(
 function renderMessage(data) {
 
     const isMine =
-        data.senderId === socket.id;
+        data.senderId ===
+        socket.id;
 
 
     const messageElement =
@@ -827,7 +826,7 @@ function renderMessage(data) {
 
 
     // ====================================
-    // MESSAGE STATUS
+    // STATUS
     // ====================================
 
     let status = null;
@@ -857,10 +856,6 @@ function renderMessage(data) {
 
     }
 
-
-    // ====================================
-    // APPEND MESSAGE
-    // ====================================
 
     messageElement.appendChild(
         header
@@ -950,29 +945,24 @@ function renderMessage(data) {
 function getMessageStatus(data) {
 
     const delivered =
-        data.deliveredTo || [];
+        data.deliveredTo ||
+        [];
+
 
     const seen =
-        data.seenBy || [];
+        data.seenBy ||
+        [];
 
-
-    /*
-     * Nobody else has received it.
-     */
 
     if (
-        delivered.length === 0
+        delivered.length ===
+        0
     ) {
 
         return "Sent";
 
     }
 
-
-    /*
-     * Everyone who received it
-     * has seen it.
-     */
 
     if (
         seen.length ===
@@ -983,11 +973,6 @@ function getMessageStatus(data) {
 
     }
 
-
-    /*
-     * At least one user received it,
-     * but not everyone has seen it.
-     */
 
     return "Delivered";
 
@@ -1009,16 +994,20 @@ socket.on(
 
 
         if (!message) {
+
             return;
+
         }
 
 
         message.data.deliveredTo =
-            data.deliveredTo || [];
+            data.deliveredTo ||
+            [];
 
 
         message.data.seenBy =
-            data.seenBy || [];
+            data.seenBy ||
+            [];
 
 
         if (message.status) {
@@ -1049,134 +1038,18 @@ function showMessageInfo(data) {
 
 
     const delivered =
-        data.deliveredTo || [];
+        data.deliveredTo ||
+        [];
+
 
     const seen =
-        data.seenBy || [];
+        data.seenBy ||
+        [];
 
-
-    // ====================================
-    // OVERALL STATUS
-    // ====================================
-
-    const overallRow =
-        document.createElement(
-            "div"
-        );
-
-
-    overallRow.className =
-        "status-row message-overall-status";
-
-
-    const overallName =
-        document.createElement(
-            "span"
-        );
-
-
-    overallName.className =
-        "status-name";
-
-
-    overallName.textContent =
-        "Overall status";
-
-
-    const overallValue =
-        document.createElement(
-            "span"
-        );
-
-
-    overallValue.className =
-        "status-value";
-
-
-    overallValue.textContent =
-        getMessageStatus(
-            data
-        );
-
-
-    overallRow.appendChild(
-        overallName
-    );
-
-
-    overallRow.appendChild(
-        overallValue
-    );
-
-
-    infoUsers.appendChild(
-        overallRow
-    );
-
-
-    // ====================================
-    // SENDER STATUS
-    // ====================================
-
-    const senderRow =
-        document.createElement(
-            "div"
-        );
-
-
-    senderRow.className =
-        "status-row";
-
-
-    const senderName =
-        document.createElement(
-            "span"
-        );
-
-
-    senderName.className =
-        "status-name";
-
-
-    senderName.textContent =
-        "You";
-
-
-    const senderStatus =
-        document.createElement(
-            "span"
-        );
-
-
-    senderStatus.className =
-        "status-value";
-
-
-    senderStatus.textContent =
-        "Sent";
-
-
-    senderRow.appendChild(
-        senderName
-    );
-
-
-    senderRow.appendChild(
-        senderStatus
-    );
-
-
-    infoUsers.appendChild(
-        senderRow
-    );
-
-
-    // ====================================
-    // RECIPIENT STATUS
-    // ====================================
 
     if (
-        delivered.length === 0
+        delivered.length ===
+        0
     ) {
 
         const row =
@@ -1189,111 +1062,76 @@ function showMessageInfo(data) {
             "status-row";
 
 
-        const nameElement =
-            document.createElement(
-                "span"
-            );
-
-
-        nameElement.className =
-            "status-name";
-
-
-        nameElement.textContent =
-            "Other users";
-
-
-        const statusElement =
-            document.createElement(
-                "span"
-            );
-
-
-        statusElement.className =
-            "status-value";
-
-
-        statusElement.textContent =
-            "Not delivered";
-
-
-        row.appendChild(
-            nameElement
-        );
-
-
-        row.appendChild(
-            statusElement
-        );
+        row.textContent =
+            "No other users received this message.";
 
 
         infoUsers.appendChild(
             row
         );
 
-    } else {
-
-        delivered.forEach(
-            (name) => {
-
-                const row =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                row.className =
-                    "status-row";
-
-
-                const nameElement =
-                    document.createElement(
-                        "span"
-                    );
-
-
-                nameElement.className =
-                    "status-name";
-
-
-                nameElement.textContent =
-                    name;
-
-
-                const statusElement =
-                    document.createElement(
-                        "span"
-                    );
-
-
-                statusElement.className =
-                    "status-value";
-
-
-                statusElement.textContent =
-                    seen.includes(name)
-                        ? "Seen"
-                        : "Delivered";
-
-
-                row.appendChild(
-                    nameElement
-                );
-
-
-                row.appendChild(
-                    statusElement
-                );
-
-
-                infoUsers.appendChild(
-                    row
-                );
-
-            }
-        );
-
     }
+
+
+    delivered.forEach(
+        (name) => {
+
+            const row =
+                document.createElement(
+                    "div"
+                );
+
+
+            row.className =
+                "status-row";
+
+
+            const nameElement =
+                document.createElement(
+                    "span"
+                );
+
+
+            nameElement.className =
+                "status-name";
+
+
+            nameElement.textContent =
+                name;
+
+
+            const statusElement =
+                document.createElement(
+                    "span"
+                );
+
+
+            statusElement.className =
+                "status-value";
+
+
+            statusElement.textContent =
+                seen.includes(name)
+                    ? "Seen"
+                    : "Delivered";
+
+
+            row.appendChild(
+                nameElement
+            );
+
+
+            row.appendChild(
+                statusElement
+            );
+
+
+            infoUsers.appendChild(
+                row
+            );
+
+        }
+    );
 
 
     messageInfoModal.classList.remove(
@@ -1398,7 +1236,9 @@ leaveButton.addEventListener(
 
 
         if (!confirmed) {
+
             return;
+
         }
 
 
@@ -1439,6 +1279,7 @@ function resetChat() {
             timerInterval
         );
 
+
         timerInterval =
             null;
 
@@ -1453,11 +1294,13 @@ function resetChat() {
     currentRoomCode =
         "";
 
+
     expiresAt =
         null;
 
 
     currentlyTypingUsers.clear();
+
 
     messageElements.clear();
 
@@ -1473,18 +1316,18 @@ function resetChat() {
     messageInput.value =
         "";
 
-    messageInput.dataset.isTyping =
-        "false";
-
 
     messageInput.disabled =
         false;
 
+
     sendButton.disabled =
         false;
 
+
     copyCodeButton.disabled =
         false;
+
 
     leaveButton.disabled =
         false;
@@ -1502,27 +1345,37 @@ function resetChat() {
         "";
 
 
+    currentUsernameElement.textContent =
+        "You: -";
+
+
+    participantCount.textContent =
+        "0/0";
+
+
+    participantsList.innerHTML =
+        "";
+
+
+    /*
+        When returning to home,
+        participant list is collapsed.
+    */
+
+    participantsList.classList.add(
+        "hidden"
+    );
+
+
     chatScreen.classList.add(
         "hidden"
     );
 
+
     homeScreen.classList.remove(
         "hidden"
     );
-   participantsList.innerHTML =
-    "";
 
-participantCount.textContent =
-    "0 / 0";
-
-participantsList.classList.add(
-    "hidden"
-);
-
-participantsArrow.textContent =
-    "▼";
-currentUsernameElement.textContent =
-    "You: -";
 }
 
 
@@ -1533,10 +1386,6 @@ currentUsernameElement.textContent =
 socket.on(
     "user_typing",
     (name) => {
-
-        /*
-         * Don't show our own name.
-         */
 
         if (
             name === username
@@ -1590,7 +1439,8 @@ function updateTypingIndicator() {
 
 
     if (
-        users.length === 0
+        users.length ===
+        0
     ) {
 
         typingIndicator.textContent =
@@ -1602,7 +1452,8 @@ function updateTypingIndicator() {
 
 
     if (
-        users.length === 1
+        users.length ===
+        1
     ) {
 
         typingIndicator.textContent =
@@ -1614,7 +1465,8 @@ function updateTypingIndicator() {
 
 
     if (
-        users.length === 2
+        users.length ===
+        2
     ) {
 
         typingIndicator.textContent =
@@ -1647,7 +1499,8 @@ function startTimer() {
 
 
     if (
-        expiresAt === null
+        expiresAt ===
+        null
     ) {
 
         timerElement.textContent =
@@ -1670,14 +1523,11 @@ function startTimer() {
 }
 
 
-// ========================================
-// UPDATE TIMER
-// ========================================
-
 function updateTimer() {
 
     if (
-        expiresAt === null
+        expiresAt ===
+        null
     ) {
 
         timerElement.textContent =
@@ -1691,7 +1541,8 @@ function updateTimer() {
     const remaining =
         Math.max(
             0,
-            expiresAt - Date.now()
+            expiresAt -
+            Date.now()
         );
 
 
@@ -1716,7 +1567,8 @@ function updateTimer() {
 
 
     if (
-        remaining <= 0
+        remaining <=
+        0
     ) {
 
         clearInterval(
@@ -1772,11 +1624,14 @@ socket.on(
         messageInput.disabled =
             true;
 
+
         sendButton.disabled =
             true;
 
+
         copyCodeButton.disabled =
             true;
+
 
         leaveButton.disabled =
             true;
@@ -1830,7 +1685,9 @@ socket.on(
 function formatTime(timestamp) {
 
     const date =
-        new Date(timestamp);
+        new Date(
+            timestamp
+        );
 
 
     return date.toLocaleTimeString(

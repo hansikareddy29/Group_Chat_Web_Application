@@ -4,6 +4,7 @@
 
 
 body {
+
     margin: 0;
 
     font-family:
@@ -18,6 +19,7 @@ body {
 
 
 .container {
+
     width: 100%;
 
     max-width: 760px;
@@ -29,6 +31,7 @@ body {
 
 
 h1 {
+
     text-align: center;
 
     margin-bottom: 5px;
@@ -36,6 +39,7 @@ h1 {
 
 
 .subtitle {
+
     text-align: center;
 
     color: #666;
@@ -44,11 +48,8 @@ h1 {
 }
 
 
-/* ================================= */
-/* HOME CARD */
-/* ================================= */
-
 .card {
+
     background: white;
 
     padding: 25px;
@@ -62,12 +63,14 @@ h1 {
 
 
 .card h2 {
+
     margin-top: 0;
 }
 
 
 input,
 select {
+
     width: 100%;
 
     padding: 12px;
@@ -83,6 +86,7 @@ select {
 
 
 button {
+
     padding: 11px 18px;
 
     border: none;
@@ -100,11 +104,13 @@ button {
 
 
 button:hover {
+
     opacity: 0.85;
 }
 
 
 button:disabled {
+
     opacity: 0.5;
 
     cursor: not-allowed;
@@ -112,6 +118,7 @@ button:disabled {
 
 
 hr {
+
     margin: 25px 0;
 
     border: none;
@@ -121,6 +128,7 @@ hr {
 
 
 .error {
+
     color: #c62828;
 
     margin-top: 15px;
@@ -128,6 +136,7 @@ hr {
 
 
 .hidden {
+
     display: none !important;
 }
 
@@ -137,6 +146,7 @@ hr {
 /* ================================= */
 
 .chat-card {
+
     background: white;
 
     border-radius: 10px;
@@ -150,11 +160,12 @@ hr {
 
 
 .chat-header {
+
     display: flex;
 
     justify-content: space-between;
 
-    align-items: center;
+    align-items: flex-start;
 
     padding: 18px;
 
@@ -163,11 +174,13 @@ hr {
 
 
 .chat-header h2 {
+
     margin: 0;
 }
 
 
 .chat-header p {
+
     margin: 5px 0 0;
 
     font-size: 13px;
@@ -176,7 +189,112 @@ hr {
 }
 
 
+/* ================================= */
+/* CURRENT USER */
+/* ================================= */
+
+#currentUsername {
+
+    font-size: 13px;
+
+    font-weight: bold;
+
+    color: #333;
+}
+
+
+/* ================================= */
+/* PARTICIPANTS */
+/* ================================= */
+
+.participants-section {
+
+    margin-top: 8px;
+
+    margin-bottom: 8px;
+}
+
+
+/*
+    This is NOT a button.
+    It is simply a clickable div.
+*/
+
+.participants-toggle {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    cursor: pointer;
+
+    font-size: 14px;
+
+    font-weight: 500;
+
+    user-select: none;
+}
+
+
+.participants-toggle:hover {
+
+    opacity: 0.7;
+}
+
+
+#participantCount {
+
+    color: #666;
+
+    font-size: 13px;
+}
+
+
+/*
+    Participant names are hidden
+    until Participants is clicked.
+*/
+
+.participants-list {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 4px;
+
+    margin-top: 6px;
+
+    padding-left: 5px;
+}
+
+
+.participant {
+
+    font-size: 13px;
+
+    padding: 4px 7px;
+
+    border-radius: 5px;
+
+    background: #f5f5f5;
+}
+
+
+.participant.you {
+
+    font-weight: bold;
+}
+
+
+/* ================================= */
+/* ROOM INFO */
+/* ================================= */
+
 .room-info {
+
     display: flex;
 
     align-items: center;
@@ -186,6 +304,7 @@ hr {
 
 
 .timer {
+
     font-weight: bold;
 
     font-family: monospace;
@@ -195,6 +314,7 @@ hr {
 
 
 .copy-button {
+
     background: #555;
 
     padding: 8px 12px;
@@ -202,6 +322,7 @@ hr {
 
 
 .leave-button {
+
     background: #8b0000;
 
     padding: 8px 12px;
@@ -213,6 +334,7 @@ hr {
 /* ================================= */
 
 .messages {
+
     height: 450px;
 
     overflow-y: auto;
@@ -228,6 +350,7 @@ hr {
 
 
 .system-message {
+
     text-align: center;
 
     color: #777;
@@ -241,6 +364,7 @@ hr {
 
 
 .message {
+
     max-width: 75%;
 
     padding: 10px 13px;
@@ -254,6 +378,7 @@ hr {
 
 
 .message.mine {
+
     align-self: flex-end;
 
     background: #e4e4e4;
@@ -261,6 +386,7 @@ hr {
 
 
 .message.other {
+
     align-self: flex-start;
 
     background: #f0f2f4;
@@ -268,6 +394,7 @@ hr {
 
 
 .message-header {
+
     font-weight: bold;
 
     margin-bottom: 4px;
@@ -275,6 +402,7 @@ hr {
 
 
 .message-text {
+
     margin-bottom: 5px;
 
     line-height: 1.4;
@@ -282,6 +410,7 @@ hr {
 
 
 .message-footer {
+
     font-size: 11px;
 
     color: #777;
@@ -295,9 +424,8 @@ hr {
 
 
 .message-status {
-    font-size: 11px;
 
-    font-weight: bold;
+    font-size: 11px;
 }
 
 
@@ -306,6 +434,7 @@ hr {
 /* ================================= */
 
 .typing-indicator {
+
     height: 24px;
 
     padding-left: 20px;
@@ -325,6 +454,7 @@ hr {
 /* ================================= */
 
 .message-input-area {
+
     display: flex;
 
     gap: 10px;
@@ -336,6 +466,7 @@ hr {
 
 
 .message-input-area input {
+
     margin: 0;
 
     flex: 1;
@@ -343,6 +474,7 @@ hr {
 
 
 .message-input-area button {
+
     height: 45px;
 }
 
@@ -352,6 +484,7 @@ hr {
 /* ================================= */
 
 .modal {
+
     position: fixed;
 
     inset: 0;
@@ -370,6 +503,7 @@ hr {
 
 
 .modal-content {
+
     background: white;
 
     width: 350px;
@@ -387,11 +521,13 @@ hr {
 
 
 .modal-content h2 {
+
     margin-top: 0;
 }
 
 
 #infoMessage {
+
     background: #f1f1f1;
 
     padding: 10px;
@@ -403,6 +539,7 @@ hr {
 
 
 .status-row {
+
     display: flex;
 
     justify-content: space-between;
@@ -415,205 +552,28 @@ hr {
 }
 
 
-.message-overall-status {
-    border-bottom: 2px solid #ddd;
-
-    margin-bottom: 5px;
-}
-
-
 .status-name {
+
     font-weight: 500;
 }
 
 
 .status-value {
+
     color: #666;
 
     font-size: 13px;
-
-    font-weight: bold;
 }
 
 
 #closeInfoButton {
+
     width: 100%;
 
     margin-top: 15px;
 }
-#currentUsername {
-    margin: 4px 0;
 
-    font-size: 14px;
 
-    font-weight: bold;
-
-    color: #333;
-}
-#currentUsername {
-    margin: 4px 0;
-
-    font-size: 14px;
-
-    font-weight: bold;
-
-    color: #333;
-}
-
-
-#participantCount {
-    margin: 4px 0;
-
-    font-size: 13px;
-
-    color: #666;
-}
-
-
-#connectionStatus {
-    margin: 4px 0;
-
-    font-size: 13px;
-
-    color: #777;
-}
-.participants-section {
-    margin-top: 8px;
-    margin-bottom: 8px;
-}
-
-
-.participants-header {
-    display: flex;
-
-    align-items: center;
-
-    gap: 8px;
-
-    font-size: 14px;
-}
-
-
-#participantCount {
-    color: #666;
-
-    font-size: 13px;
-}
-
-
-.participants-list {
-    display: flex;
-
-    flex-wrap: wrap;
-
-    gap: 6px;
-
-    margin-top: 6px;
-}
-
-
-.participant {
-    display: inline-flex;
-
-    align-items: center;
-
-    gap: 5px;
-
-    padding: 4px 9px;
-
-    border-radius: 12px;
-
-    background: #f1f1f1;
-
-    font-size: 12px;
-}
-
-
-.participant.you {
-    font-weight: bold;
-}
-.participants-section {
-    margin-top: 8px;
-    margin-bottom: 8px;
-}
-
-
-.participants-toggle {
-    display: flex;
-
-    align-items: center;
-
-    gap: 8px;
-
-    border: none;
-
-    background: transparent;
-
-    padding: 4px 0;
-
-    cursor: pointer;
-
-    font-size: 14px;
-}
-
-
-.participants-toggle:hover {
-    opacity: 0.75;
-}
-
-
-#participantCount {
-    color: #666;
-
-    font-size: 13px;
-}
-
-
-#participantsArrow {
-    font-size: 10px;
-
-    margin-left: 2px;
-}
-
-
-.participants-list {
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 5px;
-
-    margin-top: 6px;
-
-    padding: 6px 0;
-}
-
-
-.participant {
-    display: flex;
-
-    align-items: center;
-
-    gap: 6px;
-
-    font-size: 13px;
-
-    padding: 4px 8px;
-
-    border-radius: 6px;
-
-    background: #f5f5f5;
-}
-
-
-.participant.you {
-    font-weight: bold;
-}
-
-
-.hidden {
-    display: none !important;
-}
 /* ================================= */
 /* MOBILE */
 /* ================================= */
@@ -621,6 +581,7 @@ hr {
 @media (max-width: 600px) {
 
     .container {
+
         margin: 10px auto;
 
         padding: 10px;
@@ -628,6 +589,7 @@ hr {
 
 
     .chat-header {
+
         align-items: flex-start;
 
         gap: 10px;
@@ -635,6 +597,7 @@ hr {
 
 
     .room-info {
+
         flex-direction: column;
 
         align-items: flex-end;
@@ -644,11 +607,13 @@ hr {
 
 
     .messages {
+
         height: 55vh;
     }
 
 
     .message {
+
         max-width: 85%;
     }
 
