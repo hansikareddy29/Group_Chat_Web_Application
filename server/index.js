@@ -1,14 +1,24 @@
 const express = require("express");
-const http = require("http");
+const https = require("https"); 
+const fs = require("fs");       
 const { Server } = require("socket.io");
 const sqlite3 = require("sqlite3").verbose();
 const crypto = require("crypto");
 
 const app = express();
-const server = http.createServer(app);
+
+// SSL Configuration 
+const options = {
+    key: fs.readFileSync("key.pem"),
+    cert: fs.readFileSync("cert.pem")
+};
+
+// Create HTTPS server
+const server = https.createServer(options, app); 
 const io = new Server(server);
 
 app.use(express.static("public"));
+
 
 // DATABASE SETUP
 const db = new sqlite3.Database("chat.db");
@@ -24,8 +34,8 @@ db.serialize(() => {
     )`);
 });
 
+
 // ENCRYPTION HELPERS 
-// Use a fixed key so history doesn't break on server restart
 const MASTER_KEY = crypto.scryptSync("password", "salt", 32); 
 
 function encrypt(text) {
@@ -61,26 +71,22 @@ io.on("connection", (socket) => {
     socket.on("join_room", (data) => {
         const username = String(data.username || "").trim();
         
-        // Validations
         if (!username) return socket.emit("room_error", "Username is required.");
         if (roomUsers.size >= MAX_CAPACITY) return socket.emit("room_error", "Room is full.");
         
         const exists = [...roomUsers.values()].some(u => u.username.toLowerCase() === username.toLowerCase());
         if (exists) return socket.emit("room_error", "Username taken.");
 
-        // Setup User
         roomUsers.set(socket.id, { username, publicKey: data.publicKey });
         socket.username = username;
         socket.join("LOBBY");
 
-        // 1. Confirm Join
         socket.emit("room_joined", {
             username: username,
             users: [...roomUsers.values()].map(u => u.username),
             capacity: MAX_CAPACITY
         });
 
-        // 2. Send History from DB
         db.all("SELECT sender, ciphertext, nonce FROM messages ORDER BY id ASC", (err, rows) => {
             if (!err) {
                 const history = rows.map(row => ({
@@ -92,7 +98,6 @@ io.on("connection", (socket) => {
             }
         });
 
-        // 3. Update Participants List 
         socket.to("LOBBY").emit("user_joined", username);
         io.to("LOBBY").emit("room_users_update", {
             users: [...roomUsers.values()].map(u => u.username),
@@ -103,7 +108,6 @@ io.on("connection", (socket) => {
     socket.on("chat_message", (data) => {
         if (!socket.username) return;
 
-        // Encrypt before storing
         const { ciphertext, nonce } = encrypt(data.message);
 
         db.run(
@@ -120,7 +124,6 @@ io.on("connection", (socket) => {
         );
     });
 
-    // Typing Indicators
     socket.on("typing_start", () => socket.to("LOBBY").emit("user_typing", socket.username));
     socket.on("typing_stop", () => socket.to("LOBBY").emit("user_stopped_typing", socket.username));
 
@@ -140,4 +143,7 @@ io.on("connection", (socket) => {
     socket.on("disconnect", handleLeave);
 });
 
-server.listen(3000, () => console.log(`Server: http://localhost:3000`));
+const PORT = 3000;
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server is LIVE at https://10.1.75.79:${PORT}`);
+});
