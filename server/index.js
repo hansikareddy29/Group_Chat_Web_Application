@@ -7,6 +7,7 @@ const crypto = require("crypto");
 
 const app = express();
 
+// SSL Configuration 
 const options = {
     key: fs.readFileSync("key.pem"),
     cert: fs.readFileSync("cert.pem")
@@ -17,9 +18,11 @@ const io = new Server(server);
 
 app.use(express.static("public"));
 
-// DATABASE SETUP
+
+// 1. DATABASE SETUP 
 const db = new sqlite3.Database("chat.db");
 db.serialize(() => {
+    // Added 'public_key' to the table to allow for historical signature verification
     db.run(`CREATE TABLE IF NOT EXISTS messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         room_id TEXT,
@@ -27,11 +30,14 @@ db.serialize(() => {
         ciphertext TEXT,
         nonce TEXT,
         signature TEXT,
+        public_key TEXT, 
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 });
 
-const MASTER_KEY = crypto.scryptSync("password", "salt", 32);
+
+// 2. ENCRYPTION HELPERS 
+const MASTER_KEY = crypto.scryptSync("password", "salt", 32); 
 
 function encrypt(text) {
     const nonce = crypto.randomBytes(12);
@@ -52,25 +58,34 @@ function decrypt(encData, nonceHex) {
         let decrypted = decipher.update(ciphertext, 'hex', 'utf8');
         decrypted += decipher.final('utf8');
         return decrypted;
-    } catch (e) { return "[Message Corrupted]"; }
+    } catch (e) { 
+        return "[Message Corrupted]"; 
+    }
 }
 
 
-// SIGNATURE VERIFICATION 
+// 3. SIGNATURE VERIFICATION
+
 function verifySignature(message, signatureHex, publicKeyJWK) {
     try {
+        // Convert the stored JWK string/object back into a usable Public Key
         const publicKey = crypto.createPublicKey({ key: publicKeyJWK, format: 'jwk' });
         const verify = crypto.createVerify('SHA256');
         verify.update(message);
         verify.end();
         
-        // Browser ECDSA signatures using 'ieee-p1363' encoding
-        return verify.verify({ key: publicKey, dsaEncoding: 'ieee-p1363' }, Buffer.from(signatureHex, 'hex'));
+        // Browser ECDSA signatures use 'ieee-p1363' encoding
+        return verify.verify(
+            { key: publicKey, dsaEncoding: 'ieee-p1363' }, 
+            Buffer.from(signatureHex, 'hex')
+        );
     } catch (e) {
-        console.error("Verification Error:", e);
         return false;
     }
 }
+
+
+// 4. STATE MANAGEMENT & SOCKET LOGIC
 
 const MAX_CAPACITY = 4;
 const roomUsers = new Map(); // socket.id -> {username, publicKey}
@@ -81,7 +96,7 @@ io.on("connection", (socket) => {
         const username = String(data.username || "").trim();
         if (!username || roomUsers.size >= MAX_CAPACITY) return socket.emit("room_error", "Error joining.");
 
-        // Store the user's public key 
+        // Store current user session data
         roomUsers.set(socket.id, { username, publicKey: data.publicKey });
         socket.username = username;
         socket.join("LOBBY");
@@ -92,14 +107,26 @@ io.on("connection", (socket) => {
             capacity: MAX_CAPACITY
         });
 
-        db.all("SELECT sender, ciphertext, nonce FROM messages ORDER BY id ASC", (err, rows) => {
+        // LOAD HISTORY WITH RE-VERIFICATION
+        db.all("SELECT sender, ciphertext, nonce, signature, public_key FROM messages ORDER BY id ASC", (err, rows) => {
             if (!err) {
-                const history = rows.map(row => ({
-                    username: row.sender,
-                    message: decrypt(row.ciphertext, row.nonce),
-                    timestamp: "Past",
-                    verified: true // Assuming history is authentic
-                }));
+                const history = rows.map(row => {
+                    const decryptedContent = decrypt(row.ciphertext, row.nonce);
+                    
+                    // RE-VERIFY the historical signature using the stored Public Key
+                    const isStillValid = verifySignature(
+                        decryptedContent, 
+                        row.signature, 
+                        JSON.parse(row.public_key)
+                    );
+
+                    return {
+                        username: row.sender,
+                        message: decryptedContent,
+                        timestamp: "Past",
+                        verified: isStillValid // Now verified dynamically from DB!
+                    };
+                });
                 socket.emit("message_history", history);
             }
         });
@@ -116,7 +143,7 @@ io.on("connection", (socket) => {
 
         const userData = roomUsers.get(socket.id);
         
-        // 1. VERIFY SIGNATURE 
+        // 1. VERIFY SIGNATURE (Live)
         const isValid = verifySignature(data.message, data.signature, userData.publicKey);
         
         if (isValid) {
@@ -125,18 +152,28 @@ io.on("connection", (socket) => {
             console.log(`[DANGER] Signature FAILED for sender: ${socket.username}`);
         }
 
-        // 2. ENCRYPT & STORE
+        // 2. ENCRYPT 
         const { ciphertext, nonce } = encrypt(data.message);
+
+        // 3. STORE EVERYTHING (including public_key as a string)
         db.run(
-            `INSERT INTO messages (room_id, sender, ciphertext, nonce, signature) VALUES (?, ?, ?, ?, ?)`,
-            ["LOBBY", socket.username, ciphertext, nonce, data.signature],
+            `INSERT INTO messages (room_id, sender, ciphertext, nonce, signature, public_key) VALUES (?, ?, ?, ?, ?, ?)`,
+            [
+                "LOBBY", 
+                socket.username, 
+                ciphertext, 
+                nonce, 
+                data.signature, 
+                JSON.stringify(userData.publicKey)
+            ],
             (err) => {
                 if (err) return;
+                // Broadcast to others
                 io.to("LOBBY").emit("chat_message", {
                     username: socket.username,
                     message: data.message,
                     timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    verified: isValid // Send verification status to clients
+                    verified: isValid 
                 });
             }
         );
@@ -152,6 +189,9 @@ io.on("connection", (socket) => {
         }
     });
 });
+
+
+// 5. SERVER START
 
 const PORT = 3000;
 server.listen(PORT, '0.0.0.0', () => {
