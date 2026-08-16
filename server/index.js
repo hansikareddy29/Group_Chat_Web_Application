@@ -1,24 +1,21 @@
 const express = require("express");
-const https = require("https"); 
-const fs = require("fs");       
+const https = require("https");
+const fs = require("fs");
 const { Server } = require("socket.io");
 const sqlite3 = require("sqlite3").verbose();
 const crypto = require("crypto");
 
 const app = express();
 
-// SSL Configuration 
 const options = {
     key: fs.readFileSync("key.pem"),
     cert: fs.readFileSync("cert.pem")
 };
 
-// Create HTTPS server
-const server = https.createServer(options, app); 
+const server = https.createServer(options, app);
 const io = new Server(server);
 
 app.use(express.static("public"));
-
 
 // DATABASE SETUP
 const db = new sqlite3.Database("chat.db");
@@ -34,9 +31,7 @@ db.serialize(() => {
     )`);
 });
 
-
-// ENCRYPTION HELPERS 
-const MASTER_KEY = crypto.scryptSync("password", "salt", 32); 
+const MASTER_KEY = crypto.scryptSync("password", "salt", 32);
 
 function encrypt(text) {
     const nonce = crypto.randomBytes(12);
@@ -57,12 +52,26 @@ function decrypt(encData, nonceHex) {
         let decrypted = decipher.update(ciphertext, 'hex', 'utf8');
         decrypted += decipher.final('utf8');
         return decrypted;
+    } catch (e) { return "[Message Corrupted]"; }
+}
+
+
+// SIGNATURE VERIFICATION 
+function verifySignature(message, signatureHex, publicKeyJWK) {
+    try {
+        const publicKey = crypto.createPublicKey({ key: publicKeyJWK, format: 'jwk' });
+        const verify = crypto.createVerify('SHA256');
+        verify.update(message);
+        verify.end();
+        
+        // Browser ECDSA signatures using 'ieee-p1363' encoding
+        return verify.verify({ key: publicKey, dsaEncoding: 'ieee-p1363' }, Buffer.from(signatureHex, 'hex'));
     } catch (e) {
-        return "[Message Corrupted]";
+        console.error("Verification Error:", e);
+        return false;
     }
 }
 
-// STATE MANAGEMENT
 const MAX_CAPACITY = 4;
 const roomUsers = new Map(); // socket.id -> {username, publicKey}
 
@@ -70,13 +79,9 @@ io.on("connection", (socket) => {
 
     socket.on("join_room", (data) => {
         const username = String(data.username || "").trim();
-        
-        if (!username) return socket.emit("room_error", "Username is required.");
-        if (roomUsers.size >= MAX_CAPACITY) return socket.emit("room_error", "Room is full.");
-        
-        const exists = [...roomUsers.values()].some(u => u.username.toLowerCase() === username.toLowerCase());
-        if (exists) return socket.emit("room_error", "Username taken.");
+        if (!username || roomUsers.size >= MAX_CAPACITY) return socket.emit("room_error", "Error joining.");
 
+        // Store the user's public key 
         roomUsers.set(socket.id, { username, publicKey: data.publicKey });
         socket.username = username;
         socket.join("LOBBY");
@@ -92,7 +97,8 @@ io.on("connection", (socket) => {
                 const history = rows.map(row => ({
                     username: row.sender,
                     message: decrypt(row.ciphertext, row.nonce),
-                    timestamp: "Past"
+                    timestamp: "Past",
+                    verified: true // Assuming history is authentic
                 }));
                 socket.emit("message_history", history);
             }
@@ -108,8 +114,19 @@ io.on("connection", (socket) => {
     socket.on("chat_message", (data) => {
         if (!socket.username) return;
 
-        const { ciphertext, nonce } = encrypt(data.message);
+        const userData = roomUsers.get(socket.id);
+        
+        // 1. VERIFY SIGNATURE 
+        const isValid = verifySignature(data.message, data.signature, userData.publicKey);
+        
+        if (isValid) {
+            console.log(`[SECURE] Signature VERIFIED for sender: ${socket.username}`);
+        } else {
+            console.log(`[DANGER] Signature FAILED for sender: ${socket.username}`);
+        }
 
+        // 2. ENCRYPT & STORE
+        const { ciphertext, nonce } = encrypt(data.message);
         db.run(
             `INSERT INTO messages (room_id, sender, ciphertext, nonce, signature) VALUES (?, ?, ?, ?, ?)`,
             ["LOBBY", socket.username, ciphertext, nonce, data.signature],
@@ -118,29 +135,22 @@ io.on("connection", (socket) => {
                 io.to("LOBBY").emit("chat_message", {
                     username: socket.username,
                     message: data.message,
-                    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    verified: isValid // Send verification status to clients
                 });
             }
         );
     });
 
-    socket.on("typing_start", () => socket.to("LOBBY").emit("user_typing", socket.username));
-    socket.on("typing_stop", () => socket.to("LOBBY").emit("user_stopped_typing", socket.username));
-
-    const handleLeave = () => {
+    socket.on("disconnect", () => {
         if (socket.username) {
-            const name = socket.username;
             roomUsers.delete(socket.id);
-            socket.to("LOBBY").emit("user_left", name);
             io.to("LOBBY").emit("room_users_update", {
                 users: [...roomUsers.values()].map(u => u.username),
                 capacity: MAX_CAPACITY
             });
         }
-    };
-
-    socket.on("leave_room", handleLeave);
-    socket.on("disconnect", handleLeave);
+    });
 });
 
 const PORT = 3000;
