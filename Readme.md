@@ -1,173 +1,98 @@
-# Persistent and Secure WebSocket Chat
-
-A real-time group chat system implemented using Node.js, Socket.io, and SQLite. This project demonstrates four core security properties: **Persistence**, **Confidentiality**, **Integrity**, and **Authenticity**.
-
----
-
-## 🚀 Features
-
-* **Real-time Communication:** Built with WebSockets (Socket.io).
-* **Persistence:** All messages are stored in a SQLite database (`chat.db`).
-* **Confidentiality:** Messages are encrypted using **AES-256-GCM** before storage.
-* **Integrity:** The system uses GCM Authentication Tags to detect and block tampered messages.
-* **Authenticity:** Every message is digitally signed using **ECDSA (P-256)** signatures generated on the client side.
-* **HTTPS/SSL:** Runs over a secure context to enable modern browser Cryptography APIs.
-
----
-
-## 🛠️ Prerequisites
-
-* **Node.js** (v14 or higher)
-* **npm** (Node Package Manager)
-* **OpenSSL** (Usually pre-installed on Linux/Mac; required for SSL generation)
-
----
-
-## 📥 Installation & Setup
-
-### 1. Clone the Repository
-
-```bash
-git clone <your-github-link>
-cd Group_Chat_Web_Application
+# Distributed Group Chat with Go Load Balancer & Shared PostgreSQL
+This project implements a scalable, high-availability group chat application. It features a Go-based Load Balancer on Sys1 that distributes traffic across three Node.js backends (Sys2, Sys3, Sys4). Shared state is managed via a centralized PostgreSQL database on Sys2, with inter-node synchronization to ensure all users see messages in real-time regardless of their connected node.
+# Architecture
+* Sys1 (Entry Point): Go Load Balancer (Port 3249 External / 3000 Internal).
+* Sys2: Node.js Backend + Centralized PostgreSQL Database.
+* Sys3: Node.js Backend.
+* Sys4: Node.js Backend.
+## 1. Security: Generating SSL Certificates
+Since the application uses the Web Crypto API, HTTPS is required. Generate self-signed certificates on all systems (or generate once and copy to all):
 ```
-
-### 2. Install Dependencies
-
-```bash
-npm install
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 365 -nodes -subj "/C=IN/ST=State/L=City/O=Organization/OU=Dept/CN=10.1.75.79"
 ```
-
-### 3. Generate SSL Certificates
-
-Modern browsers block the Web Crypto API on HTTP origins. You must generate a self-signed certificate to run the app over HTTPS.
-
-Run the following command in the root folder:
-
-```bash
-openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes
+## 2. Sys2: Centralized Database Setup (PostgreSQL)
+Sys2 acts as the single source of truth for chat history.
+**Installation**
 ```
-
-Press **Enter** for all prompts to use the default values.
-
-### 4. Prepare the Database
-
-The server will automatically create `chat.db` on its first run.
-
-Ensure that the folder has write permissions.
-
----
-
-## 🏃 Running the Application
-
-### 1. Start the Server
-
-```bash
-node server/index.js
+sudo apt update
+sudo apt install postgresql postgresql-contrib -y
+sudo service postgresql start
 ```
-
-### 2. Access the Website
-
-**Local:**
-
-```text
-https://localhost:3249
+**Database & User Configuration**
 ```
-
-**Lab Server:**
-
-```text
-https://10.1.75.79:3249
+sudo -u postgres psql -c "CREATE DATABASE chat_db;"
+sudo -u postgres psql -c "CREATE USER student WITH PASSWORD 'password123';"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE chat_db TO student;"
+sudo -u postgres psql -d chat_db -c "GRANT ALL ON SCHEMA public TO student;"
 ```
-
-### 3. Bypassing the SSL Warning
-
-Since the certificate is self-signed, the browser will show a **"Your connection is not private"** warning.
-
-1. Click **Advanced**.
-2. Click **Proceed to ... (unsafe)**.
-
-This step is necessary to enable the Digital Signature features.
-
----
-
-## 🧪 Demonstration Guide
-
-### 1. Persistence
-
-Send a message, refresh the browser, and join again.
-
-You will see your message displayed under the:
-
-```text
---- Past Messages ---
+**Enable Remote Connections**
+Allow Sys3 and Sys4 to connect to Sys2:
+### 1. Modify postgresql.conf:
 ```
-
-section, proving that the message was retrieved from the database.
-
-### 2. Digital Signatures (Authenticity)
-
-Upon joining, each client generates a unique ECDSA key pair. Every message sent is digitally signed.
-
-The server verifies the signature using the sender's public key.
-
-**Evidence:**
-
-Authentic messages show a green:
-
-```text
-✓ Verified Signature
+echo "listen_addresses = '*'" | sudo tee -a /etc/postgresql/16/main/postgresql.conf
 ```
-
-badge in the UI.
-
-The server console will also log:
-
-```text
-[SECURE] Signature VERIFIED
+### 2. Modify pg_hba.conf:
 ```
-
-### 3. Tamper Detection (Integrity)
-
-To demonstrate that the system detects modified messages:
-
-1. Stop the server.
-2. Manually edit a ciphertext value in `chat.db` using a SQLite viewer.
-3. Restart the server and join the chat.
-
-The modified message will be displayed as:
-
-```text
-[Message Corrupted]
+echo "host all all 0.0.0.0/0 md5" | sudo tee -a /etc/postgresql/16/main/pg_hba.conf
 ```
-
-This proves that the AES-GCM authentication tag detected the modification.
-
----
-
-## 📂 Project Structure
-
-```text
-Group_Chat_Web_Application/
-│
-├── server/
-│   └── index.js              # Main server logic
-│                              # HTTPS, WebSockets, Encryption, Verification
-│
-├── public/
-│   ├── app.js                # Client-side logic
-│   │                          # Key generation, Signing, UI
-│   └── index.html             # Chat interface
-│
-├── chat.db                    # SQLite database
-├── cert.pem                   # SSL certificate
-└── key.pem                    # SSL private key
+### 3. Restart PostgreSQL:
 ```
+sudo service postgresql restart
+```
+## 3. Sys2, Sys3, Sys4: Node.js Backend Setup
+**Prerequisites**
+Install Node.js and the required drivers:
+```
+npm install express socket.io pg
+```
+**Deployment (Background Mode)**
+Run the following commands on the respective systems to ensure the server remains active after logout:
+**Sys2:**
+```
+nohup env INSTANCE_NAME=Sys2 PORT=3000 node server/index.js > sys2.log 2>&1 &
+```
+**Sys3:**
+```
+nohup env INSTANCE_NAME=Sys3 PORT=3000 node server/index.js > sys3.log 2>&1 &
+```
+**Sys4:**
+```
+nohup env INSTANCE_NAME=Sys4 PORT=3000 node server/index.js > sys4.log 2>&1 &
+```
+## 4. Sys1: Go Load Balancer Setup
+**Build the Load Balancer**
+```
+go build -o loadbalancer main.go
+```
+**Deployment (Background Mode)**
+The Load Balancer uses HTTPS to encrypt traffic and routes it to the internal IPs of the backends:
+```
+nohup ./loadbalancer -port 3000 -tls=true -cert=cert.pem -key=key.pem -backends "https://172.17.0.51:3000,https://172.17.0.52:3000,https://172.17.0.53:3000" > lb.log 2>&1 &
+```
+## 5. Verification & Evaluation
+**Accessing the Application**
+Open your browser and navigate to:
+**https://10.1.75.79:3249**
 
-## 📄 File Description
+**Measuring Metrics**
+Metrics are collected automatically by the Load Balancer. View them at:
+**https://10.1.75.79:3249/lb/metrics**
+* Testing Shared State
+  * Open Tab 1 (assigned to Sys2).
+  * Open Tab 2 (assigned to Sys4).
+  * Send a message from Tab 1.
+  * Verify that Tab 2 receives the message via the PostgreSQL sync loop (400ms polling).
+## 6. Maintenance Commands
+To stop all processes:
+```
+# Kill Node.js backends
+pgrep -f node | xargs kill -9
 
-* **server/index.js** — Main server logic handling HTTPS, WebSockets, encryption, and signature verification.
-* **public/app.js** — Client-side logic for ECDSA key generation, message signing, and UI handling.
-* **public/index.html** — Frontend chat interface.
-* **chat.db** — SQLite database used for persistent message storage.
-* **cert.pem / key.pem** — Self-signed SSL certificate and private key generated locally.
+# Kill Go Load Balancer
+pgrep -f loadbalancer | xargs kill -9
+```
+To check logs:
+```
+tail -f lb.log      # Load Balancer logs
+tail -f sys2.log    # Backend logs
+```
