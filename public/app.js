@@ -96,13 +96,18 @@ function renderMessage(data) {
     const isMine = data.username === myUsername;
     const div = document.createElement("div");
     div.className = `message ${isMine ? "mine" : "other"}`;
+    
+    // Ensure timestamp exists
+    const time = data.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
     const status = data.verified 
         ? `<span style="color:#28a745; font-size:9px; font-weight:bold; margin-left:8px;">✓ Verified</span>` 
         : `<span style="color:#dc3545; font-size:9px; font-weight:bold; margin-left:8px;">✗ Unverified</span>`;
+    
     div.innerHTML = `
         <div class="message-header">
             ${isMine ? "You" : data.username} 
-            <span style="font-size:10px; opacity:0.6">${data.timestamp || ""}</span>
+            <span style="font-size:10px; opacity:0.6">${time}</span>
             ${status}
         </div>
         <div class="message-text">${data.message}</div>
